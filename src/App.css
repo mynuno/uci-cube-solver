@@ -381,3 +381,159 @@ select {
     flex-direction: column;
   }
 }
+
+.photo-uploader {
+  margin-bottom: 28px;
+  padding: 22px;
+  border: 1px solid #dce2ec;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(27, 39, 70, 0.06);
+}
+
+.photo-uploader-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.photo-uploader-heading h2 {
+  margin: 4px 0 0;
+}
+
+.photo-upload-count {
+  min-width: 68px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 800;
+  color: #735400;
+  background: #fff4c7;
+}
+
+.photo-upload-count-complete {
+  color: #216e3a;
+  background: #e8f5ec;
+}
+
+.photo-uploader-description {
+  max-width: 760px;
+  margin: 12px 0 20px;
+  line-height: 1.6;
+  color: #657085;
+}
+
+.face-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.face-photo-card {
+  padding: 14px;
+  border: 1px solid #dce2ec;
+  border-radius: 14px;
+  background: #f8f9fc;
+}
+
+.face-photo-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.face-photo-card-header strong {
+  display: block;
+  font-size: 1.2rem;
+}
+
+.face-photo-card-header span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: #657085;
+}
+
+.face-photo-card-header small {
+  flex-shrink: 0;
+  color: #657085;
+}
+
+.face-photo-preview {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px dashed #aeb8c8;
+  border-radius: 10px;
+  aspect-ratio: 1;
+  color: #33415a;
+  background: #edf1f7;
+  cursor: pointer;
+}
+
+.face-photo-preview:hover {
+  border-color: #0064a4;
+  background: #e6eef5;
+}
+
+.face-photo-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.face-photo-preview > span {
+  display: flex;
+  height: 100%;
+  padding: 18px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.face-photo-preview > span small {
+  margin-top: 8px;
+  font-weight: 500;
+  color: #657085;
+}
+
+.face-photo-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.danger-text-button {
+  padding: 10px 12px;
+  border: 0;
+  color: #a72f2f;
+  background: transparent;
+  cursor: pointer;
+}
+
+.danger-text-button:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .face-photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .photo-uploader {
+    min-width: 620px;
+  }
+
+  .face-photo-grid {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+}

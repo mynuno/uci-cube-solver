@@ -3,11 +3,10 @@ import "./App.css";
 import { CubeNet } from "./components/CubeNet/CubeNet";
 import { ProjectControls } from "./components/ProjectControls";
 import { TargetFacePicker } from "./components/TargetFacePicker";
-import {
-  createInitialCubeState,
-  validateInitialCubeState,
-} from "./cube/cube";
+import { createInitialCubeState, validateInitialCubeState } from "./cube/cube";
 import { FACE_NAMES, type CubeState, type FaceName } from "./cube/types";
+import { FacePhotoUploader } from "./components/image/FacePhotoUploader";
+import type { FacePhoto } from "./image/types";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -69,8 +68,7 @@ function createEmptyFaceCounts(): Record<FaceName, number> {
 function App() {
   const [cubeState, setCubeState] = useState(createInitialCubeState);
 
-  const [selectedTargetFace, setSelectedTargetFace] =
-    useState<FaceName>("F");
+  const [selectedTargetFace, setSelectedTargetFace] = useState<FaceName>("F");
 
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
     null,
@@ -104,6 +102,10 @@ function App() {
     (face) => targetFaceCounts[face] === 9,
   );
 
+  const [facePhotos, setFacePhotos] = useState<
+    Partial<Record<FaceName, FacePhoto>>
+  >({});
+
   function handleStickerClick(stickerId: string) {
     setSelectedStickerId(stickerId);
     setNotice(null);
@@ -113,9 +115,7 @@ function App() {
       const sticker = nextState.stickers[stickerId];
 
       sticker.targetFace =
-        sticker.targetFace === selectedTargetFace
-          ? null
-          : selectedTargetFace;
+        sticker.targetFace === selectedTargetFace ? null : selectedTargetFace;
 
       sticker.targetPosition = null;
       sticker.targetRotation = null;
@@ -137,6 +137,53 @@ function App() {
     setNotice(null);
   }
 
+  function handleSelectFacePhoto(face: FaceName, file: File) {
+    setFacePhotos((previousPhotos) => {
+      const previousPhoto = previousPhotos[face];
+
+      if (previousPhoto) {
+        URL.revokeObjectURL(previousPhoto.previewUrl);
+      }
+
+      const nextPhoto: FacePhoto = {
+        face,
+        file,
+        fileName: file.name,
+        previewUrl: URL.createObjectURL(file),
+      };
+
+      return {
+        ...previousPhotos,
+        [face]: nextPhoto,
+      };
+    });
+
+    setNotice({
+      type: "success",
+      message: `${face}면 사진을 등록했습니다.`,
+    });
+  }
+
+  function handleRemoveFacePhoto(face: FaceName) {
+    setFacePhotos((previousPhotos) => {
+      const photo = previousPhotos[face];
+
+      if (photo) {
+        URL.revokeObjectURL(photo.previewUrl);
+      }
+
+      const nextPhotos = {
+        ...previousPhotos,
+      };
+
+      delete nextPhotos[face];
+
+      return nextPhotos;
+    });
+
+    setNotice(null);
+  }
+
   return (
     <main className="app">
       <header className="app-header">
@@ -145,8 +192,8 @@ function App() {
         <h1>큐브 조각 분류</h1>
 
         <p>
-          각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다.
-          현재는 사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
+          각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다. 현재는
+          사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
         </p>
       </header>
 
@@ -165,9 +212,7 @@ function App() {
           <div className="status-row">
             <div
               className={
-                allFacesComplete
-                  ? "validation-success"
-                  : "validation-progress"
+                allFacesComplete ? "validation-success" : "validation-progress"
               }
             >
               {allFacesComplete
@@ -219,6 +264,12 @@ function App() {
                 message,
               })
             }
+          />
+
+          <FacePhotoUploader
+            facePhotos={facePhotos}
+            onSelectPhoto={handleSelectFacePhoto}
+            onRemovePhoto={handleRemoveFacePhoto}
           />
 
           <TargetFacePicker
