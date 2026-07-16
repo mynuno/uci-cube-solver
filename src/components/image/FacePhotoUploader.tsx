@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { FACE_DESIGNS } from "../../cube/constants";
 import { FACE_NAMES, type FaceName } from "../../cube/types";
 import type { FacePhoto } from "../../image/types";
@@ -35,12 +35,13 @@ function FacePhotoCard({
   onEditCorners,
 }: FacePhotoCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null);
+
   const design = FACE_DESIGNS[face];
   const cornersComplete = photo?.corners.length === 4;
+  const isLandscape = imageAspectRatio === null || imageAspectRatio >= 1;
 
-  function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -52,6 +53,7 @@ function FacePhotoCard({
       return;
     }
 
+    setImageAspectRatio(null);
     onSelectPhoto(face, file);
     event.target.value = "";
   }
@@ -81,8 +83,30 @@ function FacePhotoCard({
         }
       >
         {photo ? (
-          <>
-            <img src={photo.previewUrl} alt={`${face}면 미리보기`} />
+          <div
+            className={`face-photo-image-stage ${
+              isLandscape ? "is-landscape" : "is-portrait"
+            }`}
+            style={{
+              aspectRatio:
+                imageAspectRatio && Number.isFinite(imageAspectRatio)
+                  ? String(imageAspectRatio)
+                  : undefined,
+            }}
+          >
+            <img
+              src={photo.previewUrl}
+              alt={`${face}면 미리보기`}
+              onLoad={(event) => {
+                const image = event.currentTarget;
+
+                if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+                  setImageAspectRatio(
+                    image.naturalWidth / image.naturalHeight,
+                  );
+                }
+              }}
+            />
 
             {photo.corners.map((point, index) => (
               <span
@@ -96,10 +120,10 @@ function FacePhotoCard({
                 {index + 1}
               </span>
             ))}
-          </>
+          </div>
         ) : (
-          <span>
-            사진 선택
+          <span className="face-photo-placeholder">
+            <span>사진 선택</span>
             <small>{CAPTURE_GUIDES[face]}</small>
           </span>
         )}

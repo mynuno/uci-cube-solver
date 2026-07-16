@@ -6,6 +6,7 @@ import {
 } from "react";
 import type { FaceName } from "../../cube/types";
 import type { FacePhoto, NormalizedPoint } from "../../image/types";
+import { PerspectivePreview } from "./PerspectivePreview";
 
 interface CornerEditorProps {
   face: FaceName;
@@ -18,19 +19,15 @@ interface DragState {
   pointIndex: number;
 }
 
+const GUIDE_LABELS = [
+  "1. 좌측 위",
+  "2. 우측 위",
+  "3. 우측 아래",
+  "4. 좌측 아래",
+];
+
 function clamp(value: number): number {
   return Math.min(1, Math.max(0, value));
-}
-
-function getNormalizedPoint(
-  event: ReactPointerEvent<HTMLDivElement>,
-): NormalizedPoint {
-  const rect = event.currentTarget.getBoundingClientRect();
-
-  return {
-    x: clamp((event.clientX - rect.left) / rect.width),
-    y: clamp((event.clientY - rect.top) / rect.height),
-  };
 }
 
 export function CornerEditor({
@@ -39,7 +36,7 @@ export function CornerEditor({
   onClose,
   onSave,
 }: CornerEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const [points, setPoints] = useState<NormalizedPoint[]>(
     photo.corners.map((point) => ({ ...point })),
@@ -61,17 +58,51 @@ export function CornerEditor({
     };
   }, [onClose]);
 
-  function handleEditorPointerDown(
+  function getPointFromPointer(
+    clientX: number,
+    clientY: number,
+    allowOutside = false,
+  ): NormalizedPoint | null {
+    const image = imageRef.current;
+
+    if (!image) {
+      return null;
+    }
+
+    const rect = image.getBoundingClientRect();
+
+    if (!allowOutside) {
+      const isOutsideImage =
+        clientX < rect.left ||
+        clientX > rect.right ||
+        clientY < rect.top ||
+        clientY > rect.bottom;
+
+      if (isOutsideImage) {
+        return null;
+      }
+    }
+
+    return {
+      x: clamp((clientX - rect.left) / rect.width),
+      y: clamp((clientY - rect.top) / rect.height),
+    };
+  }
+
+  function handleStagePointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
   ) {
     if (points.length >= 4) {
       return;
     }
 
-    setPoints((previousPoints) => [
-      ...previousPoints,
-      getNormalizedPoint(event),
-    ]);
+    const point = getPointFromPointer(event.clientX, event.clientY);
+
+    if (!point) {
+      return;
+    }
+
+    setPoints((previousPoints) => [...previousPoints, point]);
   }
 
   function handlePointPointerDown(
@@ -79,6 +110,8 @@ export function CornerEditor({
     pointIndex: number,
   ) {
     event.stopPropagation();
+    event.preventDefault();
+
     event.currentTarget.setPointerCapture(event.pointerId);
 
     setDragState({
@@ -89,16 +122,19 @@ export function CornerEditor({
   function handlePointPointerMove(
     event: ReactPointerEvent<HTMLButtonElement>,
   ) {
-    if (!dragState || !editorRef.current) {
+    if (!dragState) {
       return;
     }
 
-    const rect = editorRef.current.getBoundingClientRect();
+    const nextPoint = getPointFromPointer(
+      event.clientX,
+      event.clientY,
+      true,
+    );
 
-    const nextPoint: NormalizedPoint = {
-      x: clamp((event.clientX - rect.left) / rect.width),
-      y: clamp((event.clientY - rect.top) / rect.height),
-    };
+    if (!nextPoint) {
+      return;
+    }
 
     setPoints((previousPoints) =>
       previousPoints.map((point, index) =>
@@ -110,7 +146,10 @@ export function CornerEditor({
   function handlePointPointerUp(
     event: ReactPointerEvent<HTMLButtonElement>,
   ) {
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
     setDragState(null);
   }
 
@@ -129,13 +168,6 @@ export function CornerEditor({
       points.map((point) => ({ ...point })),
     );
   }
-
-  const guideLabels = [
-    "1. 좌측 위",
-    "2. 우측 위",
-    "3. 우측 아래",
-    "4. 좌측 아래",
-  ];
 
   return (
     <div
@@ -170,81 +202,92 @@ export function CornerEditor({
         </header>
 
         <p className="corner-editor-description">
-          큐브 면의 바깥 테두리를 기준으로 좌측 위부터 시계 방향으로
+          큐브 면의 정사각형 테두리를 기준으로 좌측 위부터 시계 방향으로
           네 점을 선택하세요. 선택한 점은 드래그해서 수정할 수 있습니다.
         </p>
 
         <div className="corner-editor-layout">
-          <div
-            ref={editorRef}
-            className="corner-editor-image"
-            onPointerDown={handleEditorPointerDown}
-          >
-            <img
-              src={photo.previewUrl}
-              alt={`${face}면 꼭짓점 선택`}
-              draggable={false}
-            />
-
-            {points.length >= 2 && (
-              <svg
-                className="corner-editor-overlay"
-                viewBox="0 0 1 1"
-                preserveAspectRatio="none"
-                aria-hidden="true"
+          <div className="corner-editor-main">
+            <div className="corner-editor-image">
+              <div
+                className="corner-editor-image-stage"
+                onPointerDown={handleStagePointerDown}
               >
-                <polyline
-                  points={[
-                    ...points,
-                    ...(points.length === 4 ? [points[0]] : []),
-                  ]
-                    .map((point) => `${point.x},${point.y}`)
-                    .join(" ")}
-                  fill={
-                    points.length === 4
-                      ? "rgba(0, 100, 164, 0.16)"
-                      : "none"
-                  }
-                  stroke="currentColor"
-                  strokeWidth="0.006"
-                  vectorEffect="non-scaling-stroke"
+                <img
+                  ref={imageRef}
+                  src={photo.previewUrl}
+                  alt={`${face}면 꼭짓점 선택`}
+                  draggable={false}
                 />
-              </svg>
-            )}
 
-            {points.map((point, index) => (
-              <button
-                key={index}
-                type="button"
-                className="corner-point"
-                style={{
-                  left: `${point.x * 100}%`,
-                  top: `${point.y * 100}%`,
-                }}
-                aria-label={`${index + 1}번 꼭짓점`}
-                onPointerDown={(event) =>
-                  handlePointPointerDown(event, index)
-                }
-                onPointerMove={handlePointPointerMove}
-                onPointerUp={handlePointPointerUp}
-                onPointerCancel={() => setDragState(null)}
-              >
-                {index + 1}
-              </button>
-            ))}
+                {points.length >= 2 && (
+                  <svg
+                    className="corner-editor-overlay"
+                    viewBox="0 0 1 1"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <polyline
+                      points={[
+                        ...points,
+                        ...(points.length === 4 ? [points[0]] : []),
+                      ]
+                        .map((point) => `${point.x},${point.y}`)
+                        .join(" ")}
+                      fill={
+                        points.length === 4
+                          ? "rgba(0, 100, 164, 0.16)"
+                          : "none"
+                      }
+                      stroke="currentColor"
+                      strokeWidth="0.006"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
+                )}
 
-            {points.length < 4 && (
-              <div className="corner-editor-click-guide">
-                다음: {guideLabels[points.length]}
+                {points.map((point, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className="corner-point"
+                    style={{
+                      left: `${point.x * 100}%`,
+                      top: `${point.y * 100}%`,
+                    }}
+                    aria-label={`${index + 1}번 꼭짓점`}
+                    onPointerDown={(event) =>
+                      handlePointPointerDown(event, index)
+                    }
+                    onPointerMove={handlePointPointerMove}
+                    onPointerUp={handlePointPointerUp}
+                    onPointerCancel={() => setDragState(null)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                {points.length < 4 && (
+                  <div className="corner-editor-click-guide">
+                    다음: {GUIDE_LABELS[points.length]}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            <PerspectivePreview
+              photo={{
+                ...photo,
+                corners: points,
+              }}
+            />
           </div>
 
           <aside className="corner-editor-sidebar">
             <h3>선택 순서</h3>
 
             <ol>
-              {guideLabels.map((label, index) => (
+              {GUIDE_LABELS.map((label, index) => (
                 <li
                   key={label}
                   className={
@@ -270,6 +313,11 @@ export function CornerEditor({
                 </div>
               ))}
             </div>
+
+            <p className="corner-editor-tip">
+              검은 여백이 아니라 사진 안에서 큐브 한 면의 바깥 테두리를
+              선택하세요.
+            </p>
           </aside>
         </div>
 
