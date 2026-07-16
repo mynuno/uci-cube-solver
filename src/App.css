@@ -309,3 +309,75 @@ select {
     grid-template-columns: repeat(3, minmax(180px, 1fr));
   }
 }
+
+.project-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  border: 1px solid #dce2ec;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.project-controls h2 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+}
+
+.project-control-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.secondary-button {
+  padding: 11px 16px;
+  border: 1px solid #c7d0dd;
+  border-radius: 10px;
+  color: #263247;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  background: #f1f4f8;
+}
+
+.notice-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border-radius: 10px;
+}
+
+.notice-message-success {
+  color: #216e3a;
+  background: #e8f5ec;
+}
+
+.notice-message-error {
+  color: #982c2c;
+  background: #fff0f0;
+}
+
+.notice-message button {
+  border: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .project-controls {
+    min-width: 620px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
