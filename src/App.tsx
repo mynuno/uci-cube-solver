@@ -3,10 +3,21 @@ import "./App.css";
 import { CubeNet } from "./components/CubeNet/CubeNet";
 import { ProjectControls } from "./components/ProjectControls";
 import { TargetFacePicker } from "./components/TargetFacePicker";
-import { createInitialCubeState, validateInitialCubeState } from "./cube/cube";
-import { FACE_NAMES, type CubeState, type FaceName } from "./cube/types";
 import { FacePhotoUploader } from "./components/image/FacePhotoUploader";
-import type { FacePhoto } from "./image/types";
+import { CornerEditor } from "./components/image/CornerEditor";
+import {
+  createInitialCubeState,
+  validateInitialCubeState,
+} from "./cube/cube";
+import {
+  FACE_NAMES,
+  type CubeState,
+  type FaceName,
+} from "./cube/types";
+import type {
+  FacePhoto,
+  NormalizedPoint,
+} from "./image/types";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -68,7 +79,8 @@ function createEmptyFaceCounts(): Record<FaceName, number> {
 function App() {
   const [cubeState, setCubeState] = useState(createInitialCubeState);
 
-  const [selectedTargetFace, setSelectedTargetFace] = useState<FaceName>("F");
+  const [selectedTargetFace, setSelectedTargetFace] =
+    useState<FaceName>("F");
 
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
     null,
@@ -78,6 +90,12 @@ function App() {
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const [facePhotos, setFacePhotos] = useState<
+    Partial<Record<FaceName, FacePhoto>>
+  >({});
+
+  const [editingFace, setEditingFace] = useState<FaceName | null>(null);
 
   const validationErrors = validateInitialCubeState(cubeState);
 
@@ -102,10 +120,6 @@ function App() {
     (face) => targetFaceCounts[face] === 9,
   );
 
-  const [facePhotos, setFacePhotos] = useState<
-    Partial<Record<FaceName, FacePhoto>>
-  >({});
-
   function handleStickerClick(stickerId: string) {
     setSelectedStickerId(stickerId);
     setNotice(null);
@@ -115,7 +129,9 @@ function App() {
       const sticker = nextState.stickers[stickerId];
 
       sticker.targetFace =
-        sticker.targetFace === selectedTargetFace ? null : selectedTargetFace;
+        sticker.targetFace === selectedTargetFace
+          ? null
+          : selectedTargetFace;
 
       sticker.targetPosition = null;
       sticker.targetRotation = null;
@@ -150,6 +166,7 @@ function App() {
         file,
         fileName: file.name,
         previewUrl: URL.createObjectURL(file),
+        corners: [],
       };
 
       return {
@@ -181,7 +198,49 @@ function App() {
       return nextPhotos;
     });
 
+    if (editingFace === face) {
+      setEditingFace(null);
+    }
+
     setNotice(null);
+  }
+
+  function handleEditCorners(face: FaceName) {
+    if (!facePhotos[face]) {
+      return;
+    }
+
+    setEditingFace(face);
+  }
+
+  function handleSaveCorners(
+    face: FaceName,
+    corners: NormalizedPoint[],
+  ) {
+    setFacePhotos((previousPhotos) => {
+      const photo = previousPhotos[face];
+
+      if (!photo) {
+        return previousPhotos;
+      }
+
+      return {
+        ...previousPhotos,
+        [face]: {
+          ...photo,
+          corners: corners.map((point) => ({
+            ...point,
+          })),
+        },
+      };
+    });
+
+    setEditingFace(null);
+
+    setNotice({
+      type: "success",
+      message: `${face}면 꼭짓점 네 개를 저장했습니다.`,
+    });
   }
 
   return (
@@ -192,8 +251,8 @@ function App() {
         <h1>큐브 조각 분류</h1>
 
         <p>
-          각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다. 현재는
-          사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
+          각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다.
+          현재는 사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
         </p>
       </header>
 
@@ -212,7 +271,9 @@ function App() {
           <div className="status-row">
             <div
               className={
-                allFacesComplete ? "validation-success" : "validation-progress"
+                allFacesComplete
+                  ? "validation-success"
+                  : "validation-progress"
               }
             >
               {allFacesComplete
@@ -270,6 +331,7 @@ function App() {
             facePhotos={facePhotos}
             onSelectPhoto={handleSelectFacePhoto}
             onRemovePhoto={handleRemoveFacePhoto}
+            onEditCorners={handleEditCorners}
           />
 
           <TargetFacePicker
@@ -284,6 +346,15 @@ function App() {
             onStickerClick={handleStickerClick}
           />
         </>
+      )}
+
+      {editingFace && facePhotos[editingFace] && (
+        <CornerEditor
+          face={editingFace}
+          photo={facePhotos[editingFace]}
+          onClose={() => setEditingFace(null)}
+          onSave={handleSaveCorners}
+        />
       )}
     </main>
   );

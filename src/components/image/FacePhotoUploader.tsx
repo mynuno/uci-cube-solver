@@ -7,6 +7,7 @@ interface FacePhotoUploaderProps {
   facePhotos: Partial<Record<FaceName, FacePhoto>>;
   onSelectPhoto: (face: FaceName, file: File) => void;
   onRemovePhoto: (face: FaceName) => void;
+  onEditCorners: (face: FaceName) => void;
 }
 
 const CAPTURE_GUIDES: Record<FaceName, string> = {
@@ -23,6 +24,7 @@ interface FacePhotoCardProps {
   photo?: FacePhoto;
   onSelectPhoto: (face: FaceName, file: File) => void;
   onRemovePhoto: (face: FaceName) => void;
+  onEditCorners: (face: FaceName) => void;
 }
 
 function FacePhotoCard({
@@ -30,9 +32,11 @@ function FacePhotoCard({
   photo,
   onSelectPhoto,
   onRemovePhoto,
+  onEditCorners,
 }: FacePhotoCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const design = FACE_DESIGNS[face];
+  const cornersComplete = photo?.corners.length === 4;
 
   function handleFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -60,19 +64,39 @@ function FacePhotoCard({
           <span>{design.label}</span>
         </div>
 
-        <small>{photo ? "사진 등록됨" : "사진 필요"}</small>
+        <small>
+          {!photo
+            ? "사진 필요"
+            : cornersComplete
+              ? "꼭짓점 완료"
+              : "꼭짓점 필요"}
+        </small>
       </header>
 
       <button
         type="button"
         className="face-photo-preview"
-        onClick={() => inputRef.current?.click()}
+        onClick={() =>
+          photo ? onEditCorners(face) : inputRef.current?.click()
+        }
       >
         {photo ? (
-          <img
-            src={photo.previewUrl}
-            alt={`${face}면 미리보기`}
-          />
+          <>
+            <img src={photo.previewUrl} alt={`${face}면 미리보기`} />
+
+            {photo.corners.map((point, index) => (
+              <span
+                key={index}
+                className="face-photo-corner-marker"
+                style={{
+                  left: `${point.x * 100}%`,
+                  top: `${point.y * 100}%`,
+                }}
+              >
+                {index + 1}
+              </span>
+            ))}
+          </>
         ) : (
           <span>
             사진 선택
@@ -83,6 +107,14 @@ function FacePhotoCard({
 
       {photo && (
         <div className="face-photo-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => onEditCorners(face)}
+          >
+            꼭짓점 지정
+          </button>
+
           <button
             type="button"
             className="secondary-button"
@@ -116,9 +148,14 @@ export function FacePhotoUploader({
   facePhotos,
   onSelectPhoto,
   onRemovePhoto,
+  onEditCorners,
 }: FacePhotoUploaderProps) {
   const uploadedCount = FACE_NAMES.filter(
     (face) => facePhotos[face],
+  ).length;
+
+  const completedCornerCount = FACE_NAMES.filter(
+    (face) => facePhotos[face]?.corners.length === 4,
   ).length;
 
   return (
@@ -129,14 +166,26 @@ export function FacePhotoUploader({
           <h2>현재 큐브의 6면 사진</h2>
         </div>
 
-        <div
-          className={
-            uploadedCount === 6
-              ? "photo-upload-count photo-upload-count-complete"
-              : "photo-upload-count"
-          }
-        >
-          {uploadedCount}/6
+        <div className="photo-progress-group">
+          <div
+            className={
+              uploadedCount === 6
+                ? "photo-upload-count photo-upload-count-complete"
+                : "photo-upload-count"
+            }
+          >
+            사진 {uploadedCount}/6
+          </div>
+
+          <div
+            className={
+              completedCornerCount === 6
+                ? "photo-upload-count photo-upload-count-complete"
+                : "photo-upload-count"
+            }
+          >
+            꼭짓점 {completedCornerCount}/6
+          </div>
         </div>
       </div>
 
@@ -153,6 +202,7 @@ export function FacePhotoUploader({
             photo={facePhotos[face]}
             onSelectPhoto={onSelectPhoto}
             onRemovePhoto={onRemovePhoto}
+            onEditCorners={onEditCorners}
           />
         ))}
       </div>
