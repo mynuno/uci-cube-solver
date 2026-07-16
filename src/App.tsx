@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import "./App.css";
 import { CubeNet } from "./components/CubeNet/CubeNet";
+import { ProjectControls } from "./components/ProjectControls";
 import { TargetFacePicker } from "./components/TargetFacePicker";
 import {
   createInitialCubeState,
@@ -11,18 +12,24 @@ import { FACE_NAMES, type CubeState, type FaceName } from "./cube/types";
 function cloneCubeState(state: CubeState): CubeState {
   return {
     ...state,
+
     stickers: Object.fromEntries(
       Object.entries(state.stickers).map(([id, sticker]) => [
         id,
         {
           ...sticker,
-          currentPosition: { ...sticker.currentPosition },
+          currentPosition: {
+            ...sticker.currentPosition,
+          },
           targetPosition: sticker.targetPosition
-            ? { ...sticker.targetPosition }
+            ? {
+                ...sticker.targetPosition,
+              }
             : null,
         },
       ]),
     ),
+
     cubies: Object.fromEntries(
       Object.entries(state.cubies).map(([id, cubie]) => [
         id,
@@ -32,6 +39,7 @@ function cloneCubeState(state: CubeState): CubeState {
         },
       ]),
     ),
+
     faces: {
       U: state.faces.U.map((row) => [...row]),
       D: state.faces.D.map((row) => [...row]),
@@ -40,7 +48,10 @@ function cloneCubeState(state: CubeState): CubeState {
       L: state.faces.L.map((row) => [...row]),
       R: state.faces.R.map((row) => [...row]),
     } as CubeState["faces"],
-    images: { ...state.images },
+
+    images: {
+      ...state.images,
+    },
   };
 }
 
@@ -57,11 +68,18 @@ function createEmptyFaceCounts(): Record<FaceName, number> {
 
 function App() {
   const [cubeState, setCubeState] = useState(createInitialCubeState);
+
   const [selectedTargetFace, setSelectedTargetFace] =
     useState<FaceName>("F");
+
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
     null,
   );
+
+  const [notice, setNotice] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const validationErrors = validateInitialCubeState(cubeState);
 
@@ -88,6 +106,7 @@ function App() {
 
   function handleStickerClick(stickerId: string) {
     setSelectedStickerId(stickerId);
+    setNotice(null);
 
     setCubeState((previousState) => {
       const nextState = cloneCubeState(previousState);
@@ -109,13 +128,22 @@ function App() {
     setCubeState(createInitialCubeState());
     setSelectedStickerId(null);
     setSelectedTargetFace("F");
+    setNotice(null);
+  }
+
+  function handleLoadCubeState(loadedState: CubeState) {
+    setCubeState(loadedState);
+    setSelectedStickerId(null);
+    setNotice(null);
   }
 
   return (
     <main className="app">
       <header className="app-header">
         <p className="eyebrow">UCI Cube Solver</p>
+
         <h1>큐브 조각 분류</h1>
+
         <p>
           각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다.
           현재는 사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
@@ -155,6 +183,43 @@ function App() {
               분류 초기화
             </button>
           </div>
+
+          {notice && (
+            <div
+              className={
+                notice.type === "success"
+                  ? "notice-message notice-message-success"
+                  : "notice-message notice-message-error"
+              }
+            >
+              <span>{notice.message}</span>
+
+              <button
+                type="button"
+                aria-label="알림 닫기"
+                onClick={() => setNotice(null)}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          <ProjectControls
+            cubeState={cubeState}
+            onLoadCubeState={handleLoadCubeState}
+            onLoadSuccess={(message) =>
+              setNotice({
+                type: "success",
+                message,
+              })
+            }
+            onLoadError={(message) =>
+              setNotice({
+                type: "error",
+                message,
+              })
+            }
+          />
 
           <TargetFacePicker
             selectedFace={selectedTargetFace}
