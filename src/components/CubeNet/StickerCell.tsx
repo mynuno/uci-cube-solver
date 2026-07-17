@@ -1,8 +1,13 @@
-import type { FaceName, Sticker } from "../../cube/types";
+import type {
+  FaceName,
+  ImageAsset,
+  Sticker,
+} from "../../cube/types";
 import { FACE_DESIGNS } from "../../cube/constants";
 
 interface StickerCellProps {
   sticker: Sticker;
+  image?: ImageAsset;
   selected: boolean;
   onClick: () => void;
 }
@@ -34,6 +39,7 @@ function getTargetFaceStyle(targetFace: FaceName | null) {
 
 export function StickerCell({
   sticker,
+  image,
   selected,
   onClick,
 }: StickerCellProps) {
@@ -42,16 +48,34 @@ export function StickerCell({
   return (
     <button
       type="button"
-      className={`sticker-cell ${selected ? "sticker-cell-selected" : ""}`}
+      className={`sticker-cell ${
+        selected ? "sticker-cell-selected" : ""
+      }`}
       title={sticker.id}
-      style={getTargetFaceStyle(sticker.targetFace)}
+      style={image ? undefined : getTargetFaceStyle(sticker.targetFace)}
       onClick={onClick}
     >
-      <span>{sticker.targetFace ?? "?"}</span>
+      {image ? (
+        <img
+          className="sticker-cell-image"
+          src={image.url}
+          alt={`${face} ${row},${col} 조각`}
+        />
+      ) : (
+        <span className="sticker-target-label">
+          {sticker.targetFace ?? "?"}
+        </span>
+      )}
 
-      <small>
+      <small className="sticker-position-label">
         {face} {row},{col}
       </small>
+
+      {image && sticker.targetFace && (
+        <span className="sticker-target-badge">
+          {sticker.targetFace}
+        </span>
+      )}
     </button>
   );
 }

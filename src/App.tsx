@@ -5,19 +5,10 @@ import { ProjectControls } from "./components/ProjectControls";
 import { TargetFacePicker } from "./components/TargetFacePicker";
 import { FacePhotoUploader } from "./components/image/FacePhotoUploader";
 import { CornerEditor } from "./components/image/CornerEditor";
-import {
-  createInitialCubeState,
-  validateInitialCubeState,
-} from "./cube/cube";
-import {
-  FACE_NAMES,
-  type CubeState,
-  type FaceName,
-} from "./cube/types";
-import type {
-  FacePhoto,
-  NormalizedPoint,
-} from "./image/types";
+import { createInitialCubeState, validateInitialCubeState } from "./cube/cube";
+import { FACE_NAMES, type CubeState, type FaceName } from "./cube/types";
+import type { FacePhoto, NormalizedPoint } from "./image/types";
+import { splitFacePhotoIntoStickerImages } from "./image/splitFace";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -79,8 +70,7 @@ function createEmptyFaceCounts(): Record<FaceName, number> {
 function App() {
   const [cubeState, setCubeState] = useState(createInitialCubeState);
 
-  const [selectedTargetFace, setSelectedTargetFace] =
-    useState<FaceName>("F");
+  const [selectedTargetFace, setSelectedTargetFace] = useState<FaceName>("F");
 
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
     null,
@@ -129,9 +119,7 @@ function App() {
       const sticker = nextState.stickers[stickerId];
 
       sticker.targetFace =
-        sticker.targetFace === selectedTargetFace
-          ? null
-          : selectedTargetFace;
+        sticker.targetFace === selectedTargetFace ? null : selectedTargetFace;
 
       sticker.targetPosition = null;
       sticker.targetRotation = null;
@@ -213,34 +201,65 @@ function App() {
     setEditingFace(face);
   }
 
-  function handleSaveCorners(
-    face: FaceName,
-    corners: NormalizedPoint[],
-  ) {
-    setFacePhotos((previousPhotos) => {
-      const photo = previousPhotos[face];
+  async function handleSaveCorners(face: FaceName, corners: NormalizedPoint[]) {
+    const currentPhoto = facePhotos[face];
 
-      if (!photo) {
-        return previousPhotos;
-      }
+    if (!currentPhoto) {
+      setNotice({
+        type: "error",
+        message: `${face}면 사진을 찾지 못했습니다.`,
+      });
+      return;
+    }
 
-      return {
+    const updatedPhoto: FacePhoto = {
+      ...currentPhoto,
+      corners: corners.map((point) => ({
+        ...point,
+      })),
+    };
+
+    try {
+      const generatedImages =
+        await splitFacePhotoIntoStickerImages(updatedPhoto);
+
+      setFacePhotos((previousPhotos) => ({
         ...previousPhotos,
-        [face]: {
-          ...photo,
-          corners: corners.map((point) => ({
-            ...point,
-          })),
-        },
-      };
-    });
+        [face]: updatedPhoto,
+      }));
 
-    setEditingFace(null);
+      setCubeState((previousState) => {
+        const nextState = cloneCubeState(previousState);
 
-    setNotice({
-      type: "success",
-      message: `${face}면 꼭짓점 네 개를 저장했습니다.`,
-    });
+        for (const generated of generatedImages) {
+          const { row, col } = generated.position;
+          const stickerId = nextState.faces[face][row][col];
+          const sticker = nextState.stickers[stickerId];
+
+          nextState.images[generated.image.id] = generated.image;
+          sticker.imageId = generated.image.id;
+        }
+
+        return nextState;
+      });
+
+      setEditingFace(null);
+
+      setNotice({
+        type: "success",
+        message: `${face}면을 보정하고 9개 조각으로 분할했습니다.`,
+      });
+    } catch (error) {
+      console.error("Face splitting failed:", error);
+
+      setNotice({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : `${face}면 조각 이미지를 만들지 못했습니다.`,
+      });
+    }
   }
 
   return (
@@ -251,8 +270,8 @@ function App() {
         <h1>큐브 조각 분류</h1>
 
         <p>
-          각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다.
-          현재는 사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
+          각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다. 현재는
+          사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
         </p>
       </header>
 
@@ -271,9 +290,7 @@ function App() {
           <div className="status-row">
             <div
               className={
-                allFacesComplete
-                  ? "validation-success"
-                  : "validation-progress"
+                allFacesComplete ? "validation-success" : "validation-progress"
               }
             >
               {allFacesComplete

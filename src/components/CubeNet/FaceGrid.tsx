@@ -26,14 +26,23 @@ export function FaceGrid({
       </header>
 
       <div className="face-grid">
-        {grid.flat().map((stickerId) => (
-          <StickerCell
-            key={stickerId}
-            sticker={cubeState.stickers[stickerId]}
-            selected={selectedStickerId === stickerId}
-            onClick={() => onStickerClick(stickerId)}
-          />
-        ))}
+        {grid.flat().map((stickerId) => {
+          const sticker = cubeState.stickers[stickerId];
+
+          const image = sticker.imageId
+            ? cubeState.images[sticker.imageId]
+            : undefined;
+
+          return (
+            <StickerCell
+              key={stickerId}
+              sticker={sticker}
+              image={image}
+              selected={selectedStickerId === stickerId}
+              onClick={() => onStickerClick(stickerId)}
+            />
+          );
+        })}
       </div>
     </section>
   );
