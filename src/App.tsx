@@ -2,11 +2,17 @@ import { useMemo, useState } from "react";
 import "./App.css";
 import { CubeNet } from "./components/CubeNet/CubeNet";
 import { ProjectControls } from "./components/ProjectControls";
+import { StickerTargetEditor } from "./components/StickerTargetEditor";
 import { TargetFacePicker } from "./components/TargetFacePicker";
 import { FacePhotoUploader } from "./components/image/FacePhotoUploader";
 import { CornerEditor } from "./components/image/CornerEditor";
 import { createInitialCubeState, validateInitialCubeState } from "./cube/cube";
-import { FACE_NAMES, type CubeState, type FaceName } from "./cube/types";
+import {
+  FACE_NAMES,
+  type CubeState,
+  type FaceName,
+  type GridPosition,
+} from "./cube/types";
 import type { FacePhoto, NormalizedPoint } from "./image/types";
 import { splitFacePhotoIntoStickerImages } from "./image/splitFace";
 
@@ -67,6 +73,13 @@ function createEmptyFaceCounts(): Record<FaceName, number> {
   };
 }
 
+function createTargetPositionKey(
+  face: FaceName,
+  position: GridPosition,
+): string {
+  return `${face}-${position.row}-${position.col}`;
+}
+
 function App() {
   const [cubeState, setCubeState] = useState(createInitialCubeState);
 
@@ -101,6 +114,31 @@ function App() {
     return counts;
   }, [cubeState]);
 
+  const targetPositionOwners = useMemo(() => {
+    const owners: Record<string, string> = {};
+
+    for (const sticker of Object.values(cubeState.stickers)) {
+      if (!sticker.targetFace || !sticker.targetPosition) {
+        continue;
+      }
+
+      owners[
+        createTargetPositionKey(sticker.targetFace, sticker.targetPosition)
+      ] = sticker.id;
+    }
+
+    return owners;
+  }, [cubeState]);
+
+  const selectedSticker = selectedStickerId
+    ? cubeState.stickers[selectedStickerId] ?? null
+    : null;
+
+  const selectedStickerImage =
+    selectedSticker?.imageId && cubeState.images[selectedSticker.imageId]
+      ? cubeState.images[selectedSticker.imageId]
+      : undefined;
+
   const assignedCount = Object.values(targetFaceCounts).reduce(
     (sum, count) => sum + count,
     0,
@@ -118,14 +156,113 @@ function App() {
       const nextState = cloneCubeState(previousState);
       const sticker = nextState.stickers[stickerId];
 
-      sticker.targetFace =
-        sticker.targetFace === selectedTargetFace ? null : selectedTargetFace;
+      if (!sticker.targetFace) {
+        sticker.targetFace = selectedTargetFace;
+      }
 
+      return nextState;
+    });
+  }
+
+  function handleChangeStickerTargetFace(face: FaceName) {
+    if (!selectedStickerId) {
+      return;
+    }
+
+    setSelectedTargetFace(face);
+
+    setCubeState((previousState) => {
+      const nextState = cloneCubeState(previousState);
+      const sticker = nextState.stickers[selectedStickerId];
+
+      sticker.targetFace = face;
       sticker.targetPosition = null;
       sticker.targetRotation = null;
 
       return nextState;
     });
+
+    setNotice(null);
+  }
+
+  function handleChangeStickerTargetPosition(position: GridPosition) {
+    if (!selectedStickerId) {
+      return;
+    }
+
+    const sticker = cubeState.stickers[selectedStickerId];
+
+    if (!sticker.targetFace) {
+      setNotice({
+        type: "error",
+        message: "먼저 목표 면을 선택해야 합니다.",
+      });
+      return;
+    }
+
+    const key = createTargetPositionKey(sticker.targetFace, position);
+    const ownerId = targetPositionOwners[key];
+
+    if (ownerId && ownerId !== selectedStickerId) {
+      setNotice({
+        type: "error",
+        message: `${sticker.targetFace}면 ${position.row + 1}행 ${
+          position.col + 1
+        }열에는 이미 다른 조각이 지정되어 있습니다.`,
+      });
+      return;
+    }
+
+    setCubeState((previousState) => {
+      const nextState = cloneCubeState(previousState);
+      const nextSticker = nextState.stickers[selectedStickerId];
+
+      nextSticker.targetPosition = {
+        ...position,
+      };
+
+      return nextState;
+    });
+
+    setNotice(null);
+  }
+
+  function handleChangeStickerRotation(
+    rotation: 0 | 90 | 180 | 270,
+  ) {
+    if (!selectedStickerId) {
+      return;
+    }
+
+    setCubeState((previousState) => {
+      const nextState = cloneCubeState(previousState);
+      const sticker = nextState.stickers[selectedStickerId];
+
+      sticker.targetRotation = rotation;
+
+      return nextState;
+    });
+
+    setNotice(null);
+  }
+
+  function handleClearStickerTarget() {
+    if (!selectedStickerId) {
+      return;
+    }
+
+    setCubeState((previousState) => {
+      const nextState = cloneCubeState(previousState);
+      const sticker = nextState.stickers[selectedStickerId];
+
+      sticker.targetFace = null;
+      sticker.targetPosition = null;
+      sticker.targetRotation = null;
+
+      return nextState;
+    });
+
+    setNotice(null);
   }
 
   function handleReset() {
@@ -375,6 +512,16 @@ function App() {
             selectedFace={selectedTargetFace}
             counts={targetFaceCounts}
             onSelectFace={setSelectedTargetFace}
+          />
+
+          <StickerTargetEditor
+            sticker={selectedSticker}
+            image={selectedStickerImage}
+            positionOwners={targetPositionOwners}
+            onChangeTargetFace={handleChangeStickerTargetFace}
+            onChangeTargetPosition={handleChangeStickerTargetPosition}
+            onChangeRotation={handleChangeStickerRotation}
+            onClear={handleClearStickerTarget}
           />
 
           <CubeNet
