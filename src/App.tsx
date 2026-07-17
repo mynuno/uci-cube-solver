@@ -186,11 +186,31 @@ function App() {
       return nextPhotos;
     });
 
+    setCubeState((previousState) => {
+      const nextState = cloneCubeState(previousState);
+
+      for (const row of nextState.faces[face]) {
+        for (const stickerId of row) {
+          const sticker = nextState.stickers[stickerId];
+
+          if (sticker.imageId) {
+            delete nextState.images[sticker.imageId];
+            sticker.imageId = null;
+          }
+        }
+      }
+
+      return nextState;
+    });
+
     if (editingFace === face) {
       setEditingFace(null);
     }
 
-    setNotice(null);
+    setNotice({
+      type: "success",
+      message: `${face}면 사진과 생성된 9개 조각을 삭제했습니다.`,
+    });
   }
 
   function handleEditCorners(face: FaceName) {
