@@ -15,6 +15,7 @@ import {
 } from "./cube/types";
 import type { FacePhoto, NormalizedPoint } from "./image/types";
 import { splitFacePhotoIntoStickerImages } from "./image/splitFace";
+import { TargetAssemblyPreview } from "./components/TargetAssemblyPreview";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -85,6 +86,8 @@ function App() {
 
   const [selectedTargetFace, setSelectedTargetFace] = useState<FaceName>("F");
 
+  const [previewTargetFace, setPreviewTargetFace] = useState<FaceName>("F");
+
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
     null,
   );
@@ -131,7 +134,7 @@ function App() {
   }, [cubeState]);
 
   const selectedSticker = selectedStickerId
-    ? cubeState.stickers[selectedStickerId] ?? null
+    ? (cubeState.stickers[selectedStickerId] ?? null)
     : null;
 
   const selectedStickerImage =
@@ -227,9 +230,7 @@ function App() {
     setNotice(null);
   }
 
-  function handleChangeStickerRotation(
-    rotation: 0 | 90 | 180 | 270,
-  ) {
+  function handleChangeStickerRotation(rotation: 0 | 90 | 180 | 270) {
     if (!selectedStickerId) {
       return;
     }
@@ -522,6 +523,16 @@ function App() {
             onChangeTargetPosition={handleChangeStickerTargetPosition}
             onChangeRotation={handleChangeStickerRotation}
             onClear={handleClearStickerTarget}
+          />
+
+          <TargetAssemblyPreview
+            cubeState={cubeState}
+            selectedFace={previewTargetFace}
+            onSelectFace={setPreviewTargetFace}
+            onSelectSticker={(stickerId) => {
+              setSelectedStickerId(stickerId);
+              setNotice(null);
+            }}
           />
 
           <CubeNet

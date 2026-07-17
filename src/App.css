@@ -1156,3 +1156,191 @@ select {
 .sticker-target-rotation-button.sticker-target-option-selected small {
   color: #0064a4;
 }
+
+.target-assembly {
+  margin-bottom: 28px;
+  padding: 22px;
+  border: 1px solid #dce2ec;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(27, 39, 70, 0.06);
+}
+
+.target-assembly-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.target-assembly-heading h2 {
+  margin: 4px 0 0;
+}
+
+.target-assembly-heading p:last-child {
+  margin: 8px 0 0;
+  color: #657085;
+}
+
+.target-assembly-count {
+  min-width: 68px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 800;
+  color: #735400;
+  background: #fff4c7;
+}
+
+.target-assembly-count-complete {
+  color: #216e3a;
+  background: #e8f5ec;
+}
+
+.target-assembly-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 22px;
+}
+
+.target-assembly-face-tabs {
+  display: grid;
+  gap: 8px;
+}
+
+.target-assembly-face-tab {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid #c7d0dd;
+  border-radius: 10px;
+  text-align: left;
+  color: #263247;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.target-assembly-face-tab:hover {
+  background: #f1f4f8;
+}
+
+.target-assembly-face-tab strong {
+  font-size: 1rem;
+}
+
+.target-assembly-face-tab span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #657085;
+}
+
+.target-assembly-face-tab small {
+  font-weight: 800;
+  color: #657085;
+}
+
+.target-assembly-face-tab-selected {
+  border-color: #0064a4;
+  color: #004f82;
+  background: #e7f2f9;
+  box-shadow: 0 0 0 2px rgba(0, 100, 164, 0.12);
+}
+
+.target-assembly-preview-panel {
+  min-width: 0;
+}
+
+.target-assembly-preview-header {
+  margin-bottom: 10px;
+}
+
+.target-assembly-preview-header strong {
+  display: block;
+  font-size: 1.2rem;
+}
+
+.target-assembly-preview-header span {
+  font-size: 0.82rem;
+  color: #657085;
+}
+
+.target-assembly-grid {
+  display: grid;
+  width: min(100%, 620px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  aspect-ratio: 1;
+  padding: 6px;
+  border-radius: 14px;
+  background: #172033;
+}
+
+.target-assembly-cell {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid #aeb8c8;
+  border-radius: 5px;
+  color: #657085;
+  background: #edf1f7;
+}
+
+.target-assembly-cell-filled {
+  cursor: pointer;
+}
+
+.target-assembly-cell-filled:hover {
+  outline: 3px solid #e56a54;
+  outline-offset: -3px;
+}
+
+.target-assembly-cell img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center;
+  transition: transform 180ms ease;
+  pointer-events: none;
+}
+
+.target-assembly-cell > span {
+  font-weight: 700;
+}
+
+.target-assembly-cell small {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  z-index: 2;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: 0.58rem;
+  color: #ffffff;
+  background: rgba(12, 35, 64, 0.75);
+  pointer-events: none;
+}
+
+@media (max-width: 800px) {
+  .target-assembly {
+    min-width: 620px;
+  }
+
+  .target-assembly-layout {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+}
