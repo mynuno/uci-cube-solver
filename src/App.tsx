@@ -16,6 +16,8 @@ import {
 import type { FacePhoto, NormalizedPoint } from "./image/types";
 import { splitFacePhotoIntoStickerImages } from "./image/splitFace";
 import { TargetAssemblyPreview } from "./components/TargetAssemblyPreview";
+import { TargetValidationPanel } from "./components/TargetValidationPanel";
+import { validateTargetAssignments } from "./cube/targetValidation";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -132,6 +134,11 @@ function App() {
 
     return owners;
   }, [cubeState]);
+
+  const targetValidationResult = useMemo(
+    () => validateTargetAssignments(cubeState),
+    [cubeState],
+  );
 
   const selectedSticker = selectedStickerId
     ? (cubeState.stickers[selectedStickerId] ?? null)
@@ -534,6 +541,8 @@ function App() {
               setNotice(null);
             }}
           />
+
+          <TargetValidationPanel result={targetValidationResult} />
 
           <CubeNet
             cubeState={cubeState}
