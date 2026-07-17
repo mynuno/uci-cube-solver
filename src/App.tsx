@@ -18,6 +18,8 @@ import { splitFacePhotoIntoStickerImages } from "./image/splitFace";
 import { TargetAssemblyPreview } from "./components/TargetAssemblyPreview";
 import { TargetValidationPanel } from "./components/TargetValidationPanel";
 import { validateTargetAssignments } from "./cube/targetValidation";
+import { CubieTargetPanel } from "./components/CubieTargetPanel";
+import { inferCubieTargets } from "./cube/cubieTargets";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -137,6 +139,11 @@ function App() {
 
   const targetValidationResult = useMemo(
     () => validateTargetAssignments(cubeState),
+    [cubeState],
+  );
+
+  const cubieTargetResult = useMemo(
+    () => inferCubieTargets(cubeState),
     [cubeState],
   );
 
@@ -543,6 +550,9 @@ function App() {
           />
 
           <TargetValidationPanel result={targetValidationResult} />
+
+          <CubieTargetPanel result={cubieTargetResult} />
+
 
           <CubeNet
             cubeState={cubeState}
