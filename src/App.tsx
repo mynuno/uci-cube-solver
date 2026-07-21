@@ -20,6 +20,8 @@ import { TargetValidationPanel } from "./components/TargetValidationPanel";
 import { validateTargetAssignments } from "./cube/targetValidation";
 import { CubieTargetPanel } from "./components/CubieTargetPanel";
 import { inferCubieTargets } from "./cube/cubieTargets";
+import { SolverFaceletPanel } from "./components/SolverFaceletPanel";
+import { createSolverFacelets } from "./cube/solverFacelets";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -144,6 +146,11 @@ function App() {
 
   const cubieTargetResult = useMemo(
     () => inferCubieTargets(cubeState),
+    [cubeState],
+  );
+
+  const solverFaceletResult = useMemo(
+    () => createSolverFacelets(cubeState),
     [cubeState],
   );
 
@@ -553,6 +560,7 @@ function App() {
 
           <CubieTargetPanel result={cubieTargetResult} />
 
+          <SolverFaceletPanel result={solverFaceletResult} />
 
           <CubeNet
             cubeState={cubeState}

@@ -1578,3 +1578,138 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+.solver-facelet-panel {
+  margin-bottom: 28px;
+  padding: 22px;
+  border: 1px solid #dce2ec;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(27, 39, 70, 0.06);
+}
+
+.solver-facelet-panel-complete {
+  border-color: #9bc8aa;
+}
+
+.solver-facelet-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.solver-facelet-heading h2 {
+  margin: 4px 0 0;
+}
+
+.solver-facelet-heading p:last-child {
+  margin: 8px 0 0;
+  color: #657085;
+}
+
+.solver-facelet-status {
+  min-width: 92px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 800;
+  color: #735400;
+  background: #fff4c7;
+}
+
+.solver-facelet-status-complete {
+  color: #216e3a;
+  background: #e8f5ec;
+}
+
+.solver-facelet-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.solver-facelet-counts span {
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #33415a;
+  background: #edf1f7;
+}
+
+.solver-facelet-success {
+  padding: 16px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  color: #216e3a;
+  background: #e8f5ec;
+}
+
+.solver-facelet-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.solver-facelet-group,
+.solver-facelet-output {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dce2ec;
+  border-radius: 12px;
+  background: #f8f9fc;
+}
+
+.solver-facelet-group h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.solver-facelet-group p {
+  margin: 0;
+  color: #657085;
+}
+
+.solver-facelet-group ul {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.7;
+  color: #596579;
+}
+
+.solver-facelet-more {
+  margin-top: 12px !important;
+  font-weight: 700;
+}
+
+.solver-facelet-output {
+  margin-top: 16px;
+}
+
+.solver-facelet-output strong {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.solver-facelet-output code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  border-radius: 8px;
+  line-height: 1.6;
+  color: #ffffff;
+  background: #172033;
+}
+
+@media (max-width: 700px) {
+  .solver-facelet-panel {
+    min-width: 620px;
+  }
+
+  .solver-facelet-columns {
+    grid-template-columns: 1fr;
+  }
+}
