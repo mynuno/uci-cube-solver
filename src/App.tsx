@@ -563,8 +563,10 @@ function App() {
 
           <SolverFaceletPanel result={solverFaceletResult} />
 
-          <CubeSolverPanel faceletResult={solverFaceletResult} />
-
+          <CubeSolverPanel
+            key={solverFaceletResult.facelets ?? "incomplete"}
+            faceletResult={solverFaceletResult}
+          />
 
           <CubeNet
             cubeState={cubeState}

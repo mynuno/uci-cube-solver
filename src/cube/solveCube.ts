@@ -1,20 +1,45 @@
-import Cube from "cubejs";
-
 export interface CubeSolutionResult {
   solution: string;
   moves: string[];
   moveCount: number;
 }
 
-let solverInitialized = false;
+interface CubeInstance {
+  solve(maxDepth?: number): string;
+}
 
-function initializeSolver(): void {
-  if (solverInitialized) {
-    return;
+interface CubeConstructor {
+  fromString(facelets: string): CubeInstance;
+  initSolver(): void;
+}
+
+let solverInitialized = false;
+let cubeConstructor: CubeConstructor | null = null;
+
+async function loadCubeConstructor(): Promise<CubeConstructor> {
+  if (cubeConstructor) {
+    return cubeConstructor;
   }
 
-  Cube.initSolver();
-  solverInitialized = true;
+  const cubeModule = await import("cubejs");
+
+  const importedCube =
+    "default" in cubeModule ? cubeModule.default : cubeModule;
+
+  cubeConstructor = importedCube as unknown as CubeConstructor;
+
+  return cubeConstructor;
+}
+
+async function initializeSolver(): Promise<CubeConstructor> {
+  const Cube = await loadCubeConstructor();
+
+  if (!solverInitialized) {
+    Cube.initSolver();
+    solverInitialized = true;
+  }
+
+  return Cube;
 }
 
 function parseMoves(solution: string): string[] {
@@ -40,9 +65,9 @@ export async function solveFaceletString(
     window.setTimeout(resolve, 0);
   });
 
-  initializeSolver();
+  const Cube = await initializeSolver();
 
-  let cube: Cube;
+  let cube: CubeInstance;
 
   try {
     cube = Cube.fromString(facelets);

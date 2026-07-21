@@ -1854,3 +1854,156 @@ select {
     width: 100%;
   }
 }
+
+.solution-guide {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #cbd3df;
+  border-radius: 16px;
+  background: #f8f9fc;
+}
+
+.solution-guide-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.solution-guide-progress-heading span {
+  font-weight: 800;
+  color: #0064a4;
+}
+
+.solution-guide-progress-track {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dfe5ee;
+}
+
+.solution-guide-progress-value {
+  height: 100%;
+  border-radius: inherit;
+  background: #0064a4;
+  transition: width 180ms ease;
+}
+
+.solution-current-move {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  margin-top: 20px;
+  padding: 24px;
+  border-radius: 16px;
+  color: #ffffff;
+  background: #172033;
+}
+
+.solution-current-move-symbol {
+  display: grid;
+  min-height: 150px;
+  place-items: center;
+  border-radius: 14px;
+  font-size: clamp(4rem, 8vw, 7rem);
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.solution-current-move-content > span {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8ecae6;
+}
+
+.solution-current-move-content > strong {
+  display: block;
+  margin-top: 8px;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 1;
+}
+
+.solution-current-move-content h3 {
+  margin: 16px 0 4px;
+  font-size: 1.35rem;
+}
+
+.solution-current-move-content p {
+  margin: 0;
+  color: #d4dce8;
+}
+
+.solution-guide-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.solution-guide-actions button {
+  min-height: 48px;
+}
+
+.solution-guide-finished {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border-radius: 10px;
+  font-weight: 700;
+  color: #216e3a;
+  background: #e8f5ec;
+}
+
+.cube-solver-details {
+  margin-top: 18px;
+  border: 1px solid #dce2ec;
+  border-radius: 12px;
+  background: #f8f9fc;
+}
+
+.cube-solver-details summary {
+  padding: 15px 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cube-solver-details[open] summary {
+  border-bottom: 1px solid #dce2ec;
+}
+
+.cube-solver-details .cube-solver-notation {
+  margin: 16px;
+}
+
+.cube-solver-details .cube-solver-move-list {
+  margin: 0 16px 16px;
+}
+
+.cube-solver-move {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cube-solver-move-current {
+  border-color: #0064a4;
+  background: #e7f2f9;
+  box-shadow: 0 0 0 2px rgba(0, 100, 164, 0.12);
+}
+
+@media (max-width: 700px) {
+  .solution-current-move {
+    grid-template-columns: 1fr;
+  }
+
+  .solution-current-move-symbol {
+    min-height: 110px;
+  }
+
+  .solution-guide-actions {
+    grid-template-columns: 1fr;
+  }
+}
