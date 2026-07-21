@@ -2007,3 +2007,140 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+.move-orientation-guide {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(300px, 1.2fr);
+  gap: 22px;
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid #dce2ec;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.move-orientation-instructions h3 {
+  margin: 4px 0 10px;
+}
+
+.move-orientation-instructions > p {
+  margin: 0;
+  line-height: 1.7;
+  color: #596579;
+}
+
+.move-orientation-current {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #edf1f7;
+}
+
+.move-orientation-current > span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #657085;
+}
+
+.move-orientation-current > strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 1.3rem;
+  color: #0064a4;
+}
+
+.move-orientation-current p {
+  margin: 7px 0 0;
+  line-height: 1.5;
+  color: #596579;
+}
+
+.move-orientation-net {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(58px, 1fr));
+  grid-template-rows: repeat(3, minmax(58px, 1fr));
+  gap: 6px;
+  align-self: center;
+  aspect-ratio: 4 / 3;
+}
+
+.move-orientation-face {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  border: 2px solid #c7d0dd;
+  border-radius: 8px;
+  color: #33415a;
+  background: #edf1f7;
+}
+
+.move-orientation-face strong {
+  position: absolute;
+  top: 6px;
+  left: 7px;
+  font-size: 0.76rem;
+}
+
+.move-orientation-face-U {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.move-orientation-face-L {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+.move-orientation-face-F {
+  grid-row: 2;
+  grid-column: 2;
+}
+
+.move-orientation-face-R {
+  grid-row: 2;
+  grid-column: 3;
+}
+
+.move-orientation-face-B {
+  grid-row: 2;
+  grid-column: 4;
+}
+
+.move-orientation-face-D {
+  grid-row: 3;
+  grid-column: 2;
+}
+
+.move-orientation-face-active {
+  border-color: #0064a4;
+  color: #ffffff;
+  background: #0064a4;
+  box-shadow: 0 0 0 3px rgba(0, 100, 164, 0.14);
+}
+
+.move-orientation-arrow {
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1;
+}
+
+.move-orientation-warning {
+  grid-column: 1 / -1;
+  padding: 11px 13px;
+  border-radius: 10px;
+  line-height: 1.5;
+  color: #735400;
+  background: #fff4c7;
+}
+
+@media (max-width: 760px) {
+  .move-orientation-guide {
+    grid-template-columns: 1fr;
+  }
+
+  .move-orientation-net {
+    width: min(100%, 440px);
+    justify-self: center;
+  }
+}

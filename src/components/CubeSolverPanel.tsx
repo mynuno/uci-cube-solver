@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { SolverFaceletResult } from "../cube/solverFacelets";
 import { solveFaceletString, type CubeSolutionResult } from "../cube/solveCube";
+import { MoveOrientationGuide } from "./MoveOrientationGuide";
 
 interface CubeSolverPanelProps {
   faceletResult: SolverFaceletResult;
@@ -214,6 +215,8 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
                     </div>
                   </div>
                 )}
+
+                {currentMove && <MoveOrientationGuide move={currentMove} />}
 
                 <div className="solution-guide-actions">
                   <button
