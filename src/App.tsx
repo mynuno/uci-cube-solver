@@ -22,6 +22,7 @@ import { CubieTargetPanel } from "./components/CubieTargetPanel";
 import { inferCubieTargets } from "./cube/cubieTargets";
 import { SolverFaceletPanel } from "./components/SolverFaceletPanel";
 import { createSolverFacelets } from "./cube/solverFacelets";
+import { CubeSolverPanel } from "./components/CubeSolverPanel";
 
 function cloneCubeState(state: CubeState): CubeState {
   return {
@@ -561,6 +562,9 @@ function App() {
           <CubieTargetPanel result={cubieTargetResult} />
 
           <SolverFaceletPanel result={solverFaceletResult} />
+
+          <CubeSolverPanel faceletResult={solverFaceletResult} />
+
 
           <CubeNet
             cubeState={cubeState}

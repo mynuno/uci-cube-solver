@@ -1713,3 +1713,144 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+.cube-solver-panel {
+  margin-bottom: 28px;
+  padding: 22px;
+  border: 1px solid #dce2ec;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(27, 39, 70, 0.06);
+}
+
+.cube-solver-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.cube-solver-heading h2 {
+  margin: 4px 0 0;
+}
+
+.cube-solver-heading p:last-child {
+  margin: 8px 0 0;
+  color: #657085;
+}
+
+.cube-solver-blocked,
+.cube-solver-loading,
+.cube-solver-error,
+.cube-solver-success,
+.cube-solver-solved {
+  padding: 15px 17px;
+  border-radius: 12px;
+  line-height: 1.6;
+}
+
+.cube-solver-blocked {
+  color: #735400;
+  background: #fff4c7;
+}
+
+.cube-solver-loading {
+  color: #004f82;
+  background: #e7f2f9;
+}
+
+.cube-solver-error {
+  color: #982c2c;
+  background: #fff0f0;
+}
+
+.cube-solver-success,
+.cube-solver-solved {
+  font-weight: 700;
+  color: #216e3a;
+  background: #e8f5ec;
+}
+
+.cube-solver-notation {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #dce2ec;
+  border-radius: 12px;
+  background: #f8f9fc;
+}
+
+.cube-solver-notation strong {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.cube-solver-notation code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #ffffff;
+  background: #172033;
+}
+
+.cube-solver-move-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(220px, 1fr)
+  );
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.cube-solver-move {
+  display: grid;
+  grid-template-columns: 34px 48px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #dce2ec;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.cube-solver-move > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: #0064a4;
+}
+
+.cube-solver-move strong {
+  font-size: 1rem;
+}
+
+.cube-solver-move p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #657085;
+}
+
+@media (max-width: 700px) {
+  .cube-solver-panel {
+    min-width: 620px;
+  }
+
+  .cube-solver-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cube-solver-heading .primary-button {
+    width: 100%;
+  }
+}
