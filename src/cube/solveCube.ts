@@ -13,22 +13,92 @@ interface CubeConstructor {
   initSolver(): void;
 }
 
+let scriptsLoaded = false;
+let loadingPromise: Promise<CubeConstructor> | null = null;
 let solverInitialized = false;
-let cubeConstructor: CubeConstructor | null = null;
+
+function loadScript(source: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src="${source}"]`,
+    );
+
+    if (existingScript) {
+      if (existingScript.dataset.loaded === "true") {
+        resolve();
+        return;
+      }
+
+      existingScript.addEventListener("load", () => resolve(), {
+        once: true,
+      });
+
+      existingScript.addEventListener(
+        "error",
+        () => {
+          reject(new Error(`${source} 스크립트를 불러오지 못했습니다.`));
+        },
+        { once: true },
+      );
+
+      return;
+    }
+
+    const script = document.createElement("script");
+
+    script.src = source;
+    script.async = false;
+
+    script.addEventListener(
+      "load",
+      () => {
+        script.dataset.loaded = "true";
+        resolve();
+      },
+      { once: true },
+    );
+
+    script.addEventListener(
+      "error",
+      () => {
+        reject(new Error(`${source} 스크립트를 불러오지 못했습니다.`));
+      },
+      { once: true },
+    );
+
+    document.head.appendChild(script);
+  });
+}
 
 async function loadCubeConstructor(): Promise<CubeConstructor> {
-  if (cubeConstructor) {
-    return cubeConstructor;
+  if (scriptsLoaded && window.Cube) {
+    return window.Cube;
   }
 
-  const cubeModule = await import("cubejs");
+  if (loadingPromise) {
+    return loadingPromise;
+  }
 
-  const importedCube =
-    "default" in cubeModule ? cubeModule.default : cubeModule;
+  loadingPromise = (async () => {
+    await loadScript("/vendor/cubejs/cube.js");
+    await loadScript("/vendor/cubejs/solve.js");
 
-  cubeConstructor = importedCube as unknown as CubeConstructor;
+    if (!window.Cube) {
+      throw new Error(
+        "Cube 솔버 라이브러리가 전역 객체에 등록되지 않았습니다.",
+      );
+    }
 
-  return cubeConstructor;
+    scriptsLoaded = true;
+
+    return window.Cube;
+  })();
+
+  try {
+    return await loadingPromise;
+  } finally {
+    loadingPromise = null;
+  }
 }
 
 async function initializeSolver(): Promise<CubeConstructor> {
@@ -65,7 +135,18 @@ export async function solveFaceletString(
     window.setTimeout(resolve, 0);
   });
 
-  const Cube = await initializeSolver();
+  let Cube: CubeConstructor;
+
+  try {
+    Cube = await initializeSolver();
+  } catch (error) {
+    console.error("Cube solver loading failed:", error);
+
+    throw new Error(
+      "큐브 솔버 라이브러리를 불러오지 못했습니다.",
+      { cause: error },
+    );
+  }
 
   let cube: CubeInstance;
 
@@ -75,7 +156,7 @@ export async function solveFaceletString(
     console.error("Cube facelet parsing failed:", error);
 
     throw new Error(
-      "현재 조각 배치는 유효한 3×3 큐브 상태로 해석되지 않습니다.",
+      "현재 조각 배치를 유효한 3×3 큐브 상태로 해석하지 못했습니다.",
       { cause: error },
     );
   }
@@ -88,7 +169,7 @@ export async function solveFaceletString(
     console.error("Cube solving failed:", error);
 
     throw new Error(
-      "큐브 해답을 계산하지 못했습니다. 조각 분류와 사진 방향을 다시 확인하세요.",
+      "큐브 해답을 계산하지 못했습니다. 조각 분류를 다시 확인하세요.",
       { cause: error },
     );
   }
