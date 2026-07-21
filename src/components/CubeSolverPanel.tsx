@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { SolverFaceletResult } from "../cube/solverFacelets";
-import { solveFaceletString, type CubeSolutionResult } from "../cube/solveCube";
+import {
+  solveFaceletString,
+  type CubeSolutionResult,
+} from "../cube/solveCube";
 import { MoveOrientationGuide } from "./MoveOrientationGuide";
 
 interface CubeSolverPanelProps {
@@ -53,17 +56,26 @@ function describeMove(move: string): MoveDescription {
   };
 }
 
-export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
+export function CubeSolverPanel({
+  faceletResult,
+}: CubeSolverPanelProps) {
   const [status, setStatus] = useState<SolverStatus>("idle");
-  const [result, setResult] = useState<CubeSolutionResult | null>(null);
 
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [result, setResult] =
+    useState<CubeSolutionResult | null>(null);
+
+  const [errorMessage, setErrorMessage] =
+    useState<string | null>(null);
 
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
 
+  const [guideCompleted, setGuideCompleted] = useState(false);
+
   async function handleSolve() {
     if (!faceletResult.facelets) {
-      setErrorMessage("먼저 54개 조각의 목표 면 설정을 완료해야 합니다.");
+      setErrorMessage(
+        "먼저 54개 조각의 목표 면 설정을 완료해야 합니다.",
+      );
       setStatus("error");
       return;
     }
@@ -72,9 +84,12 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
     setResult(null);
     setErrorMessage(null);
     setCurrentMoveIndex(0);
+    setGuideCompleted(false);
 
     try {
-      const nextResult = await solveFaceletString(faceletResult.facelets);
+      const nextResult = await solveFaceletString(
+        faceletResult.facelets,
+      );
 
       setResult(nextResult);
       setStatus("success");
@@ -90,13 +105,19 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
   }
 
   function handlePreviousMove() {
-    setCurrentMoveIndex((previousIndex) => Math.max(0, previousIndex - 1));
+    setGuideCompleted(false);
+
+    setCurrentMoveIndex((previousIndex) =>
+      Math.max(0, previousIndex - 1),
+    );
   }
 
   function handleNextMove() {
     if (!result) {
       return;
     }
+
+    setGuideCompleted(false);
 
     setCurrentMoveIndex((previousIndex) =>
       Math.min(result.moves.length - 1, previousIndex + 1),
@@ -105,19 +126,43 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
 
   function handleRestartGuide() {
     setCurrentMoveIndex(0);
+    setGuideCompleted(false);
+  }
+
+  function handleSelectMove(index: number) {
+    setCurrentMoveIndex(index);
+    setGuideCompleted(false);
+  }
+
+  function handleCompleteGuide() {
+    setGuideCompleted(true);
+
+    window.setTimeout(() => {
+      document
+        .querySelector(".solution-completion")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+    }, 0);
   }
 
   const solvingUnavailable = !faceletResult.isComplete;
 
   const currentMove =
-    result && result.moves.length > 0 ? result.moves[currentMoveIndex] : null;
+    result && result.moves.length > 0
+      ? result.moves[currentMoveIndex]
+      : null;
 
-  const currentMoveDescription = currentMove ? describeMove(currentMove) : null;
+  const currentMoveDescription = currentMove
+    ? describeMove(currentMove)
+    : null;
 
   const isFirstMove = currentMoveIndex === 0;
 
   const isLastMove =
-    Boolean(result) && currentMoveIndex === (result?.moves.length ?? 0) - 1;
+    Boolean(result) &&
+    currentMoveIndex === (result?.moves.length ?? 0) - 1;
 
   const progressPercentage =
     result && result.moves.length > 0
@@ -129,17 +174,21 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
       <div className="cube-solver-heading">
         <div>
           <p className="eyebrow">Cube solver</p>
+
           <h2>큐브 풀이 생성</h2>
+
           <p>
-            완성된 facelet 입력을 바탕으로 실제 회전 수순을 계산하고 한 단계씩
-            안내합니다.
+            완성된 facelet 입력을 바탕으로 실제 회전 수순을
+            계산하고 한 단계씩 안내합니다.
           </p>
         </div>
 
         <button
           type="button"
           className="primary-button"
-          disabled={solvingUnavailable || status === "initializing"}
+          disabled={
+            solvingUnavailable || status === "initializing"
+          }
           onClick={handleSolve}
         >
           {status === "initializing"
@@ -152,41 +201,76 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
 
       {solvingUnavailable && (
         <div className="cube-solver-blocked">
-          목표 면 분류를 모두 완료하고 솔버 입력 검사를 통과해야 풀이를 계산할
-          수 있습니다.
+          목표 면 분류를 모두 완료하고 솔버 입력 검사를 통과해야
+          풀이를 계산할 수 있습니다.
         </div>
       )}
 
       {status === "initializing" && (
         <div className="cube-solver-loading">
-          최초 실행은 탐색 테이블을 준비하므로 몇 초 걸릴 수 있습니다. 이 동안
-          화면이 잠시 멈출 수 있습니다.
+          최초 실행은 탐색 테이블을 준비하므로 몇 초 걸릴 수
+          있습니다. 이 동안 화면이 잠시 멈출 수 있습니다.
         </div>
       )}
 
       {status === "error" && errorMessage && (
-        <div className="cube-solver-error">{errorMessage}</div>
+        <div className="cube-solver-error">
+          {errorMessage}
+        </div>
       )}
 
       {status === "success" && result && (
         <>
           <div className="cube-solver-success">
-            풀이 수순을 생성했습니다. 총 {result.moveCount}회 이동입니다.
+            풀이 수순을 생성했습니다. 총 {result.moveCount}회
+            이동입니다.
           </div>
 
           {result.moveCount === 0 ? (
-            <div className="cube-solver-solved">
-              현재 큐브가 이미 일반 3×3 기준으로 해결된 상태입니다.
+            <div
+              className="solution-completion"
+              role="status"
+              aria-live="polite"
+            >
+              <div
+                className="solution-completion-confetti"
+                aria-hidden="true"
+              >
+                <span>✦</span>
+                <span>◆</span>
+                <span>✦</span>
+                <span>◆</span>
+                <span>✦</span>
+              </div>
+
+              <div
+                className="solution-completion-icon"
+                aria-hidden="true"
+              >
+                ✓
+              </div>
+
+              <p className="eyebrow">Already solved!</p>
+
+              <h2>이미 완성된 큐브입니다</h2>
+
+              <p>
+                현재 큐브는 추가 회전 없이 일반 3×3 기준으로
+                해결된 상태입니다.
+              </p>
             </div>
           ) : (
             <>
               <div className="solution-guide">
                 <div className="solution-guide-progress-heading">
                   <strong>
-                    단계 {currentMoveIndex + 1} / {result.moves.length}
+                    단계 {currentMoveIndex + 1} /{" "}
+                    {result.moves.length}
                   </strong>
 
-                  <span>{Math.round(progressPercentage)}%</span>
+                  <span>
+                    {Math.round(progressPercentage)}%
+                  </span>
                 </div>
 
                 <div className="solution-guide-progress-track">
@@ -209,14 +293,22 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
 
                       <strong>{currentMove}</strong>
 
-                      <h3>{currentMoveDescription.faceLabel}</h3>
+                      <h3>
+                        {currentMoveDescription.faceLabel}
+                      </h3>
 
-                      <p>{currentMoveDescription.directionLabel}</p>
+                      <p>
+                        {
+                          currentMoveDescription.directionLabel
+                        }
+                      </p>
                     </div>
                   </div>
                 )}
 
-                {currentMove && <MoveOrientationGuide move={currentMove} />}
+                {currentMove && (
+                  <MoveOrientationGuide move={currentMove} />
+                )}
 
                 <div className="solution-guide-actions">
                   <button
@@ -236,29 +328,89 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
                     처음부터
                   </button>
 
-                  <button
-                    type="button"
-                    className="primary-button"
-                    disabled={isLastMove}
-                    onClick={handleNextMove}
-                  >
-                    다음 동작 →
-                  </button>
+                  {isLastMove ? (
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={handleCompleteGuide}
+                    >
+                      큐브 완성! ✓
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={handleNextMove}
+                    >
+                      다음 동작 →
+                    </button>
+                  )}
                 </div>
 
-                {isLastMove && (
+                {isLastMove && !guideCompleted && (
                   <div className="solution-guide-finished">
-                    마지막 동작입니다. 이 회전을 마치면 일반 3×3 기준 풀이가
-                    완료됩니다.
+                    마지막 동작입니다. 실제 큐브에서 이 회전을
+                    완료한 뒤
+                    <strong> 큐브 완성!</strong> 버튼을
+                    눌러주세요.
+                  </div>
+                )}
+
+                {guideCompleted && (
+                  <div
+                    className="solution-completion"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <div
+                      className="solution-completion-confetti"
+                      aria-hidden="true"
+                    >
+                      <span>✦</span>
+                      <span>◆</span>
+                      <span>✦</span>
+                      <span>◆</span>
+                      <span>✦</span>
+                    </div>
+
+                    <div
+                      className="solution-completion-icon"
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </div>
+
+                    <p className="eyebrow">
+                      Congratulations!
+                    </p>
+
+                    <h2>UCI 큐브 완성!</h2>
+
+                    <p>
+                      총 {result.moveCount}개의 회전을 모두
+                      완료했습니다. 큐브의 여섯 면이 목표
+                      이미지와 일치하는지 확인하세요.
+                    </p>
+
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={handleRestartGuide}
+                    >
+                      풀이 다시 보기
+                    </button>
                   </div>
                 )}
               </div>
 
               <details className="cube-solver-details">
-                <summary>전체 수순 및 표준 회전 기호 보기</summary>
+                <summary>
+                  전체 수순 및 표준 회전 기호 보기
+                </summary>
 
                 <div className="cube-solver-notation">
                   <strong>표준 회전 기호</strong>
+
                   <code>{result.solution}</code>
                 </div>
 
@@ -275,14 +427,17 @@ export function CubeSolverPanel({ faceletResult }: CubeSolverPanelProps) {
                             ? "cube-solver-move cube-solver-move-current"
                             : "cube-solver-move"
                         }
-                        onClick={() => setCurrentMoveIndex(index)}
+                        onClick={() =>
+                          handleSelectMove(index)
+                        }
                       >
                         <span>{index + 1}</span>
 
                         <strong>{move}</strong>
 
                         <p>
-                          {description.faceLabel}, {description.directionLabel}
+                          {description.faceLabel},{" "}
+                          {description.directionLabel}
                         </p>
                       </button>
                     );

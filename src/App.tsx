@@ -24,6 +24,37 @@ import { SolverFaceletPanel } from "./components/SolverFaceletPanel";
 import { createSolverFacelets } from "./cube/solverFacelets";
 import { CubeSolverPanel } from "./components/CubeSolverPanel";
 
+type WorkflowStep = 1 | 2 | 3 | 4;
+
+interface WorkflowStepDefinition {
+  step: WorkflowStep;
+  title: string;
+  description: string;
+}
+
+const WORKFLOW_STEPS: WorkflowStepDefinition[] = [
+  {
+    step: 1,
+    title: "사진 등록",
+    description: "6면 사진 보정 및 분할",
+  },
+  {
+    step: 2,
+    title: "조각 분류",
+    description: "목표 면·위치·회전 지정",
+  },
+  {
+    step: 3,
+    title: "완성 검증",
+    description: "이미지와 큐브 상태 확인",
+  },
+  {
+    step: 4,
+    title: "풀이 안내",
+    description: "해답 생성 및 단계별 회전",
+  },
+];
+
 function cloneCubeState(state: CubeState): CubeState {
   return {
     ...state,
@@ -88,12 +119,24 @@ function createTargetPositionKey(
   return `${face}-${position.row}-${position.col}`;
 }
 
+function hasCompleteTargetAssignments(state: CubeState): boolean {
+  return Object.values(state.stickers).every(
+    (sticker) =>
+      sticker.targetFace !== null &&
+      sticker.targetPosition !== null &&
+      sticker.targetRotation !== null,
+  );
+}
+
 function App() {
   const [cubeState, setCubeState] = useState(createInitialCubeState);
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>(1);
 
-  const [selectedTargetFace, setSelectedTargetFace] = useState<FaceName>("F");
+  const [selectedTargetFace, setSelectedTargetFace] =
+    useState<FaceName>("F");
 
-  const [previewTargetFace, setPreviewTargetFace] = useState<FaceName>("F");
+  const [previewTargetFace, setPreviewTargetFace] =
+    useState<FaceName>("F");
 
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
     null,
@@ -155,6 +198,23 @@ function App() {
     [cubeState],
   );
 
+  const processedFaceCount = useMemo(
+    () =>
+      FACE_NAMES.filter((face) =>
+        cubeState.faces[face].every((row) =>
+          row.every((stickerId) => {
+            const sticker = cubeState.stickers[stickerId];
+
+            return (
+              sticker.imageId !== null &&
+              cubeState.images[sticker.imageId] !== undefined
+            );
+          }),
+        ),
+      ).length,
+    [cubeState],
+  );
+
   const selectedSticker = selectedStickerId
     ? (cubeState.stickers[selectedStickerId] ?? null)
     : null;
@@ -172,6 +232,8 @@ function App() {
   const allFacesComplete = FACE_NAMES.every(
     (face) => targetFaceCounts[face] === 9,
   );
+
+  const allAssignmentsComplete = hasCompleteTargetAssignments(cubeState);
 
   function handleStickerClick(stickerId: string) {
     setSelectedStickerId(stickerId);
@@ -292,13 +354,29 @@ function App() {
     setCubeState(createInitialCubeState());
     setSelectedStickerId(null);
     setSelectedTargetFace("F");
+    setPreviewTargetFace("F");
+    setCurrentStep(1);
     setNotice(null);
   }
 
   function handleLoadCubeState(loadedState: CubeState) {
+    const loadedSolverResult = createSolverFacelets(loadedState);
+
     setCubeState(loadedState);
     setSelectedStickerId(null);
     setNotice(null);
+
+    if (loadedSolverResult.isComplete) {
+      setCurrentStep(4);
+      return;
+    }
+
+    if (hasCompleteTargetAssignments(loadedState)) {
+      setCurrentStep(3);
+      return;
+    }
+
+    setCurrentStep(2);
   }
 
   function handleSelectFacePhoto(face: FaceName, file: File) {
@@ -381,7 +459,10 @@ function App() {
     setEditingFace(face);
   }
 
-  async function handleSaveCorners(face: FaceName, corners: NormalizedPoint[]) {
+  async function handleSaveCorners(
+    face: FaceName,
+    corners: NormalizedPoint[],
+  ) {
     const currentPhoto = facePhotos[face];
 
     if (!currentPhoto) {
@@ -442,18 +523,72 @@ function App() {
     }
   }
 
+  function moveToPreviousStep() {
+    setCurrentStep((previousStep) =>
+      Math.max(1, previousStep - 1) as WorkflowStep,
+    );
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  function moveToNextStep() {
+    setCurrentStep((previousStep) =>
+      Math.min(4, previousStep + 1) as WorkflowStep,
+    );
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  const currentStepDefinition =
+    WORKFLOW_STEPS.find((step) => step.step === currentStep) ??
+    WORKFLOW_STEPS[0];
+
   return (
     <main className="app">
       <header className="app-header">
         <p className="eyebrow">UCI Cube Solver</p>
 
-        <h1>큐브 조각 분류</h1>
+        <h1>{currentStepDefinition.title}</h1>
 
-        <p>
-          각 스티커가 완성 상태에서 어느 면에 속해야 하는지 지정합니다. 현재는
-          사진 대신 전개도 칸으로 기능을 시험하고 있습니다.
-        </p>
+        <p>{currentStepDefinition.description}</p>
       </header>
+
+      <nav className="workflow-navigation" aria-label="큐브 풀이 진행 단계">
+        {WORKFLOW_STEPS.map((stepDefinition) => {
+          const isCurrent = stepDefinition.step === currentStep;
+          const isCompleted = stepDefinition.step < currentStep;
+
+          return (
+            <button
+              key={stepDefinition.step}
+              type="button"
+              className={[
+                "workflow-step",
+                isCurrent ? "workflow-step-current" : "",
+                isCompleted ? "workflow-step-completed" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => setCurrentStep(stepDefinition.step)}
+            >
+              <span className="workflow-step-number">
+                {isCompleted ? "✓" : stepDefinition.step}
+              </span>
+
+              <span className="workflow-step-text">
+                <strong>{stepDefinition.title}</strong>
+                <small>{stepDefinition.description}</small>
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
       {validationErrors.length > 0 ? (
         <section className="validation-error">
@@ -470,7 +605,9 @@ function App() {
           <div className="status-row">
             <div
               className={
-                allFacesComplete ? "validation-success" : "validation-progress"
+                allFacesComplete
+                  ? "validation-success"
+                  : "validation-progress"
               }
             >
               {allFacesComplete
@@ -483,7 +620,7 @@ function App() {
               className="reset-button"
               onClick={handleReset}
             >
-              분류 초기화
+              전체 작업 초기화
             </button>
           </div>
 
@@ -524,55 +661,167 @@ function App() {
             }
           />
 
-          <FacePhotoUploader
-            facePhotos={facePhotos}
-            onSelectPhoto={handleSelectFacePhoto}
-            onRemovePhoto={handleRemoveFacePhoto}
-            onEditCorners={handleEditCorners}
-          />
+          {currentStep === 1 && (
+            <section className="workflow-content">
+              <div className="workflow-section-heading">
+                <div>
+                  <p className="eyebrow">Step 1</p>
+                  <h2>6면 사진 등록 및 보정</h2>
+                  <p>
+                    각 면의 사진을 등록한 뒤 네 모서리를 지정하면
+                    9개 스티커 이미지로 자동 분할됩니다.
+                  </p>
+                </div>
 
-          <TargetFacePicker
-            selectedFace={selectedTargetFace}
-            counts={targetFaceCounts}
-            onSelectFace={setSelectedTargetFace}
-          />
+                <div className="workflow-progress-badge">
+                  {processedFaceCount}/6면 처리
+                </div>
+              </div>
 
-          <StickerTargetEditor
-            sticker={selectedSticker}
-            image={selectedStickerImage}
-            positionOwners={targetPositionOwners}
-            onChangeTargetFace={handleChangeStickerTargetFace}
-            onChangeTargetPosition={handleChangeStickerTargetPosition}
-            onChangeRotation={handleChangeStickerRotation}
-            onClear={handleClearStickerTarget}
-          />
+              <FacePhotoUploader
+                facePhotos={facePhotos}
+                onSelectPhoto={handleSelectFacePhoto}
+                onRemovePhoto={handleRemoveFacePhoto}
+                onEditCorners={handleEditCorners}
+              />
 
-          <TargetAssemblyPreview
-            cubeState={cubeState}
-            selectedFace={previewTargetFace}
-            onSelectFace={setPreviewTargetFace}
-            onSelectSticker={(stickerId) => {
-              setSelectedStickerId(stickerId);
-              setNotice(null);
-            }}
-          />
+              <div className="workflow-tip">
+                JSON 테스트 파일을 불러온 경우 사진 등록 없이 바로 다음
+                단계로 이동해도 됩니다.
+              </div>
+            </section>
+          )}
 
-          <TargetValidationPanel result={targetValidationResult} />
+          {currentStep === 2 && (
+            <section className="workflow-content">
+              <div className="workflow-section-heading">
+                <div>
+                  <p className="eyebrow">Step 2</p>
+                  <h2>54개 조각 목표 지정</h2>
+                  <p>
+                    현재 큐브의 조각을 선택하고, 완성 상태에서 들어갈
+                    면·위치·회전 방향을 지정하세요.
+                  </p>
+                </div>
 
-          <CubieTargetPanel result={cubieTargetResult} />
+                <div className="workflow-progress-badge">
+                  {assignedCount}/54개 분류
+                </div>
+              </div>
 
-          <SolverFaceletPanel result={solverFaceletResult} />
+              <TargetFacePicker
+                selectedFace={selectedTargetFace}
+                counts={targetFaceCounts}
+                onSelectFace={setSelectedTargetFace}
+              />
 
-          <CubeSolverPanel
-            key={solverFaceletResult.facelets ?? "incomplete"}
-            faceletResult={solverFaceletResult}
-          />
+              <div className="classification-layout">
+                <CubeNet
+                  cubeState={cubeState}
+                  selectedStickerId={selectedStickerId}
+                  onStickerClick={handleStickerClick}
+                />
 
-          <CubeNet
-            cubeState={cubeState}
-            selectedStickerId={selectedStickerId}
-            onStickerClick={handleStickerClick}
-          />
+                <StickerTargetEditor
+                  sticker={selectedSticker}
+                  image={selectedStickerImage}
+                  positionOwners={targetPositionOwners}
+                  onChangeTargetFace={handleChangeStickerTargetFace}
+                  onChangeTargetPosition={handleChangeStickerTargetPosition}
+                  onChangeRotation={handleChangeStickerRotation}
+                  onClear={handleClearStickerTarget}
+                />
+              </div>
+            </section>
+          )}
+
+          {currentStep === 3 && (
+            <section className="workflow-content">
+              <div className="workflow-section-heading">
+                <div>
+                  <p className="eyebrow">Step 3</p>
+                  <h2>완성 이미지와 큐브 상태 검증</h2>
+                  <p>
+                    조립된 6면 이미지, 물리적 조각 배치, 표준 솔버
+                    입력을 차례로 확인하세요.
+                  </p>
+                </div>
+
+                <div className="workflow-progress-badge">
+                  {solverFaceletResult.isComplete ? "검증 완료" : "검증 필요"}
+                </div>
+              </div>
+
+              <TargetAssemblyPreview
+                cubeState={cubeState}
+                selectedFace={previewTargetFace}
+                onSelectFace={setPreviewTargetFace}
+                onSelectSticker={(stickerId) => {
+                  setSelectedStickerId(stickerId);
+                  setCurrentStep(2);
+                  setNotice(null);
+                }}
+              />
+
+              <TargetValidationPanel result={targetValidationResult} />
+
+              <CubieTargetPanel result={cubieTargetResult} />
+
+              <SolverFaceletPanel result={solverFaceletResult} />
+            </section>
+          )}
+
+          {currentStep === 4 && (
+            <section className="workflow-content">
+              <div className="workflow-section-heading">
+                <div>
+                  <p className="eyebrow">Step 4</p>
+                  <h2>풀이 생성 및 단계별 안내</h2>
+                  <p>
+                    표준 facelet 입력으로 풀이를 계산하고 한 동작씩
+                    따라가세요.
+                  </p>
+                </div>
+
+                <div className="workflow-progress-badge">
+                  {solverFaceletResult.isComplete ? "풀이 가능" : "입력 미완성"}
+                </div>
+              </div>
+
+              <CubeSolverPanel
+                key={solverFaceletResult.facelets ?? "incomplete"}
+                faceletResult={solverFaceletResult}
+              />
+            </section>
+          )}
+
+          <div className="workflow-footer-navigation">
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={currentStep === 1}
+              onClick={moveToPreviousStep}
+            >
+              ← 이전 단계
+            </button>
+
+            <span>
+              {currentStep} / {WORKFLOW_STEPS.length}
+            </span>
+
+            <button
+              type="button"
+              className="primary-button"
+              disabled={
+                currentStep === 4 ||
+                (currentStep === 2 && !allAssignmentsComplete) ||
+                (currentStep === 3 && !solverFaceletResult.isComplete)
+              }
+              onClick={moveToNextStep}
+            >
+              다음 단계 →
+            </button>
+          </div>
         </>
       )}
 
