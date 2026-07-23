@@ -216,23 +216,35 @@ export function useCubeProject() {
   }
 
   function handleStickerClick(stickerId: string) {
+    const sticker = cubeState.stickers[stickerId];
+
     setSelectedStickerId(stickerId);
+
+    if (sticker.targetFace) {
+      setSelectedTargetFace(sticker.targetFace);
+    }
+
     setNotice(null);
-
-    setCubeState((previousState) => {
-      const nextState = cloneCubeState(previousState);
-      const sticker = nextState.stickers[stickerId];
-
-      if (!sticker.targetFace) {
-        sticker.targetFace = selectedTargetFace;
-      }
-
-      return nextState;
-    });
   }
 
-  function handleChangeStickerTargetFace(face: FaceName) {
+  function handleChangeStickerTargetPosition(
+    face: FaceName,
+    position: GridPosition,
+  ) {
     if (!selectedStickerId) {
+      return;
+    }
+
+    const key = createTargetPositionKey(face, position);
+    const ownerId = targetPositionOwners[key];
+
+    if (ownerId && ownerId !== selectedStickerId) {
+      setNotice({
+        type: "error",
+        message: `${face}면 ${position.row + 1}행 ${
+          position.col + 1
+        }열에는 이미 다른 조각이 지정되어 있습니다.`,
+      });
       return;
     }
 
@@ -240,50 +252,9 @@ export function useCubeProject() {
 
     setCubeState((previousState) => {
       const nextState = cloneCubeState(previousState);
-      const sticker = nextState.stickers[selectedStickerId];
-
-      sticker.targetFace = face;
-      sticker.targetPosition = null;
-      sticker.targetRotation = null;
-
-      return nextState;
-    });
-
-    setNotice(null);
-  }
-
-  function handleChangeStickerTargetPosition(position: GridPosition) {
-    if (!selectedStickerId) {
-      return;
-    }
-
-    const sticker = cubeState.stickers[selectedStickerId];
-
-    if (!sticker.targetFace) {
-      setNotice({
-        type: "error",
-        message: "먼저 목표 면을 선택해야 합니다.",
-      });
-      return;
-    }
-
-    const key = createTargetPositionKey(sticker.targetFace, position);
-    const ownerId = targetPositionOwners[key];
-
-    if (ownerId && ownerId !== selectedStickerId) {
-      setNotice({
-        type: "error",
-        message: `${sticker.targetFace}면 ${position.row + 1}행 ${
-          position.col + 1
-        }열에는 이미 다른 조각이 지정되어 있습니다.`,
-      });
-      return;
-    }
-
-    setCubeState((previousState) => {
-      const nextState = cloneCubeState(previousState);
       const nextSticker = nextState.stickers[selectedStickerId];
 
+      nextSticker.targetFace = face;
       nextSticker.targetPosition = {
         ...position,
       };
@@ -449,7 +420,10 @@ export function useCubeProject() {
     setEditingFace(null);
   }
 
-  async function handleSaveCorners(face: FaceName, corners: NormalizedPoint[]) {
+  async function handleSaveCorners(
+    face: FaceName,
+    corners: NormalizedPoint[],
+  ) {
     const currentPhoto = facePhotos[face];
 
     if (!currentPhoto) {
@@ -511,8 +485,8 @@ export function useCubeProject() {
   }
 
   function moveToPreviousStep() {
-    setCurrentStep(
-      (previousStep) => Math.max(1, previousStep - 1) as WorkflowStep,
+    setCurrentStep((previousStep) =>
+      Math.max(1, previousStep - 1) as WorkflowStep,
     );
 
     window.scrollTo({
@@ -522,8 +496,8 @@ export function useCubeProject() {
   }
 
   function moveToNextStep() {
-    setCurrentStep(
-      (previousStep) => Math.min(4, previousStep + 1) as WorkflowStep,
+    setCurrentStep((previousStep) =>
+      Math.min(4, previousStep + 1) as WorkflowStep,
     );
 
     window.scrollTo({
@@ -560,7 +534,6 @@ export function useCubeProject() {
     handleSelectTargetFace,
     handleSelectPreviewTargetFace,
     handleStickerClick,
-    handleChangeStickerTargetFace,
     handleChangeStickerTargetPosition,
     handleChangeStickerRotation,
     handleClearStickerTarget,

@@ -1,4 +1,5 @@
 import "./App.css";
+import "./stickerClassificationFix.css";
 
 import { CubeNet } from "./components/CubeNet/CubeNet";
 import { CubeSolverPanel } from "./components/CubeSolverPanel";
@@ -11,7 +12,10 @@ import { TargetFacePicker } from "./components/TargetFacePicker";
 import { TargetValidationPanel } from "./components/TargetValidationPanel";
 import { CornerEditor } from "./components/image/CornerEditor";
 import { FacePhotoUploader } from "./components/image/FacePhotoUploader";
-import { useCubeProject, type WorkflowStep } from "./store/useCubeProject";
+import {
+  useCubeProject,
+  type WorkflowStep,
+} from "./store/useCubeProject";
 
 interface WorkflowStepDefinition {
   step: WorkflowStep;
@@ -71,7 +75,6 @@ function App() {
     handleSelectTargetFace,
     handleSelectPreviewTargetFace,
     handleStickerClick,
-    handleChangeStickerTargetFace,
     handleChangeStickerTargetPosition,
     handleChangeStickerRotation,
     handleClearStickerTarget,
@@ -143,7 +146,9 @@ function App() {
           <div className="status-row">
             <div
               className={
-                allFacesComplete ? "validation-success" : "validation-progress"
+                allFacesComplete
+                  ? "validation-success"
+                  : "validation-progress"
               }
             >
               {allFacesComplete
@@ -193,8 +198,8 @@ function App() {
                   <p className="eyebrow">Step 1</p>
                   <h2>6면 사진 등록 및 보정</h2>
                   <p>
-                    각 면의 사진을 등록한 뒤 네 모서리를 지정하면 9개 스티커
-                    이미지로 자동 분할됩니다.
+                    각 면의 사진을 등록한 뒤 네 모서리를 지정하면 9개
+                    스티커 이미지로 자동 분할됩니다.
                   </p>
                 </div>
                 <div className="workflow-progress-badge">
@@ -210,8 +215,8 @@ function App() {
               />
 
               <div className="workflow-tip">
-                JSON 테스트 파일을 불러온 경우 사진 등록 없이 바로 다음 단계로
-                이동해도 됩니다.
+                JSON 테스트 파일을 불러온 경우 사진 등록 없이 바로 다음
+                단계로 이동해도 됩니다.
               </div>
             </section>
           )}
@@ -246,10 +251,12 @@ function App() {
                 />
 
                 <StickerTargetEditor
+                  cubeState={cubeState}
                   sticker={selectedSticker}
                   image={selectedStickerImage}
+                  previewFace={selectedTargetFace}
                   positionOwners={targetPositionOwners}
-                  onChangeTargetFace={handleChangeStickerTargetFace}
+                  onSelectTargetFace={handleSelectTargetFace}
                   onChangeTargetPosition={handleChangeStickerTargetPosition}
                   onChangeRotation={handleChangeStickerRotation}
                   onClear={handleClearStickerTarget}
@@ -265,8 +272,8 @@ function App() {
                   <p className="eyebrow">Step 3</p>
                   <h2>완성 이미지와 큐브 상태 검증</h2>
                   <p>
-                    조립된 6면 이미지, 물리적 조각 배치, 표준 솔버 입력을 차례로
-                    확인하세요.
+                    조립된 6면 이미지, 물리적 조각 배치, 표준 솔버 입력을
+                    차례로 확인하세요.
                   </p>
                 </div>
                 <div className="workflow-progress-badge">
@@ -294,7 +301,8 @@ function App() {
                   <p className="eyebrow">Step 4</p>
                   <h2>풀이 생성 및 단계별 안내</h2>
                   <p>
-                    표준 facelet 입력으로 풀이를 계산하고 한 동작씩 따라가세요.
+                    표준 facelet 입력으로 풀이를 계산하고 한 동작씩
+                    따라가세요.
                   </p>
                 </div>
                 <div className="workflow-progress-badge">
