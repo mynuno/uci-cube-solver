@@ -1,3 +1,30 @@
+## 2026-07-24
+
+### Changed
+
+* `App.tsx`에 있던 사진 등록, 조각 분류, 완성 검증, 풀이 안내 화면을 단계별 컴포넌트로 분리했다.
+* `src/components/workflow/PhotoRegistrationStep.tsx`를 추가했다.
+* `src/components/workflow/StickerClassificationStep.tsx`를 추가했다.
+* `src/components/workflow/TargetValidationStep.tsx`를 추가했다.
+* `src/components/workflow/SolverGuideStep.tsx`를 추가했다.
+* `App.tsx`를 공통 헤더, 단계 내비게이션과 단계 컴포넌트 조합 중심으로 축소했다.
+* 단계별 상태와 이벤트 핸들러는 기존과 같이 `useCubeProject.ts`에서 관리하도록 유지했다.
+* 기존 문구, CSS className과 사용자 동작을 유지했다.
+
+### Verification
+
+* `npm run lint` 통과
+* `npm run build` 통과
+* `npm run test` 통과
+* cubejs 통합 테스트 2개 통과
+* 브라우저에서 기존 4단계 화면과 사용자 동작을 수동 확인했다.
+
+### Compatibility
+
+* JSON `schemaVersion: 1` 호환성을 유지했다.
+* `public/vendor/cubejs` 브라우저 스크립트 로딩 방식을 유지했다.
+
+
 ## 2026-07-23
 
 ### Changed
