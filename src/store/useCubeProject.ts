@@ -12,81 +12,20 @@ import {
 } from "../cube/types";
 import { splitFacePhotoIntoStickerImages } from "../image/splitFace";
 import type { FacePhoto, NormalizedPoint } from "../image/types";
+import {
+  cloneCubeState,
+  countProcessedFaces,
+  countTargetFaces,
+  createTargetPositionKey,
+  createTargetPositionOwners,
+  hasCompleteTargetAssignments,
+} from "../cube/projectState";
 
 export type WorkflowStep = 1 | 2 | 3 | 4;
 
 export interface CubeProjectNotice {
   type: "success" | "error";
   message: string;
-}
-
-function cloneCubeState(state: CubeState): CubeState {
-  return {
-    ...state,
-    stickers: Object.fromEntries(
-      Object.entries(state.stickers).map(([id, sticker]) => [
-        id,
-        {
-          ...sticker,
-          currentPosition: {
-            ...sticker.currentPosition,
-          },
-          targetPosition: sticker.targetPosition
-            ? {
-                ...sticker.targetPosition,
-              }
-            : null,
-        },
-      ]),
-    ),
-    cubies: Object.fromEntries(
-      Object.entries(state.cubies).map(([id, cubie]) => [
-        id,
-        {
-          ...cubie,
-          stickerIds: [...cubie.stickerIds],
-        },
-      ]),
-    ),
-    faces: {
-      U: state.faces.U.map((row) => [...row]),
-      D: state.faces.D.map((row) => [...row]),
-      F: state.faces.F.map((row) => [...row]),
-      B: state.faces.B.map((row) => [...row]),
-      L: state.faces.L.map((row) => [...row]),
-      R: state.faces.R.map((row) => [...row]),
-    } as CubeState["faces"],
-    images: {
-      ...state.images,
-    },
-  };
-}
-
-function createEmptyFaceCounts(): Record<FaceName, number> {
-  return {
-    U: 0,
-    D: 0,
-    F: 0,
-    B: 0,
-    L: 0,
-    R: 0,
-  };
-}
-
-function createTargetPositionKey(
-  face: FaceName,
-  position: GridPosition,
-): string {
-  return `${face}-${position.row}-${position.col}`;
-}
-
-function hasCompleteTargetAssignments(state: CubeState): boolean {
-  return Object.values(state.stickers).every(
-    (sticker) =>
-      sticker.targetFace !== null &&
-      sticker.targetPosition !== null &&
-      sticker.targetRotation !== null,
-  );
 }
 
 export function useCubeProject() {
@@ -105,33 +44,15 @@ export function useCubeProject() {
 
   const validationErrors = validateInitialCubeState(cubeState);
 
-  const targetFaceCounts = useMemo(() => {
-    const counts = createEmptyFaceCounts();
+  const targetFaceCounts = useMemo(
+    () => countTargetFaces(cubeState),
+    [cubeState],
+  );
 
-    for (const sticker of Object.values(cubeState.stickers)) {
-      if (sticker.targetFace) {
-        counts[sticker.targetFace] += 1;
-      }
-    }
-
-    return counts;
-  }, [cubeState]);
-
-  const targetPositionOwners = useMemo(() => {
-    const owners: Record<string, string> = {};
-
-    for (const sticker of Object.values(cubeState.stickers)) {
-      if (!sticker.targetFace || !sticker.targetPosition) {
-        continue;
-      }
-
-      owners[
-        createTargetPositionKey(sticker.targetFace, sticker.targetPosition)
-      ] = sticker.id;
-    }
-
-    return owners;
-  }, [cubeState]);
+  const targetPositionOwners = useMemo(
+    () => createTargetPositionOwners(cubeState),
+    [cubeState],
+  );
 
   const targetValidationResult = useMemo(
     () => validateTargetAssignments(cubeState),
@@ -149,19 +70,7 @@ export function useCubeProject() {
   );
 
   const processedFaceCount = useMemo(
-    () =>
-      FACE_NAMES.filter((face) =>
-        cubeState.faces[face].every((row) =>
-          row.every((stickerId) => {
-            const sticker = cubeState.stickers[stickerId];
-
-            return (
-              sticker.imageId !== null &&
-              cubeState.images[sticker.imageId] !== undefined
-            );
-          }),
-        ),
-      ).length,
+    () => countProcessedFaces(cubeState),
     [cubeState],
   );
 
@@ -420,10 +329,7 @@ export function useCubeProject() {
     setEditingFace(null);
   }
 
-  async function handleSaveCorners(
-    face: FaceName,
-    corners: NormalizedPoint[],
-  ) {
+  async function handleSaveCorners(face: FaceName, corners: NormalizedPoint[]) {
     const currentPhoto = facePhotos[face];
 
     if (!currentPhoto) {
@@ -485,8 +391,8 @@ export function useCubeProject() {
   }
 
   function moveToPreviousStep() {
-    setCurrentStep((previousStep) =>
-      Math.max(1, previousStep - 1) as WorkflowStep,
+    setCurrentStep(
+      (previousStep) => Math.max(1, previousStep - 1) as WorkflowStep,
     );
 
     window.scrollTo({
@@ -496,8 +402,8 @@ export function useCubeProject() {
   }
 
   function moveToNextStep() {
-    setCurrentStep((previousStep) =>
-      Math.min(4, previousStep + 1) as WorkflowStep,
+    setCurrentStep(
+      (previousStep) => Math.min(4, previousStep + 1) as WorkflowStep,
     );
 
     window.scrollTo({

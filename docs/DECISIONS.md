@@ -39,3 +39,13 @@ schemaVersion: 1
 * 단계 컴포넌트 내부에 CubeState 또는 선택 상태를 복제하지 않는다.
 * `App.tsx`는 공통 헤더, 단계 내비게이션, 공통 알림, 단계 컴포넌트 조합을 담당한다.
 * 단계 분리는 기존 문구, CSS className과 사용자 동작을 변경하지 않는 구조 리팩터링으로 진행한다.
+
+## 순수 CubeState 계산은 src/cube/projectState.ts에서 관리한다
+
+React 상태와 무관한 CubeState 계산과 복제 로직은 `src/cube/projectState.ts`에 둔다.
+
+* `useCubeProject.ts`는 React 상태, 상태 전이와 사용자 이벤트 흐름 조정에 집중한다.
+* 목표 면 개수, 목표 위치 점유, 전체 배정 완료 여부와 사진 처리 완료 면 개수는 순수 함수로 계산한다.
+* `cloneCubeState`는 `stickers`, `cubies`, `faces`, `images`와 수정 가능한 중첩 객체를 독립적으로 복제한다.
+* 유틸리티 분리를 위해 CubeState 구조나 JSON 저장 형식을 변경하지 않는다.
+* 분리된 순수 함수는 React API 없이 단위 테스트할 수 있어야 한다.

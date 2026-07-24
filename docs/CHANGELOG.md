@@ -10,6 +10,11 @@
 * `App.tsx`를 공통 헤더, 단계 내비게이션과 단계 컴포넌트 조합 중심으로 축소했다.
 * 단계별 상태와 이벤트 핸들러는 기존과 같이 `useCubeProject.ts`에서 관리하도록 유지했다.
 * 기존 문구, CSS className과 사용자 동작을 유지했다.
+* `useCubeProject.ts`에 있던 순수 CubeState 계산과 복제 로직을 `src/cube/projectState.ts`로 분리했다.
+* 목표 면별 배정 개수, 목표 위치 점유 정보, 전체 목표 배정 완료 여부와 사진 처리 완료 면 개수를 순수 함수로 계산하도록 변경했다.
+* `cloneCubeState`가 이미지 객체의 `sourcePosition`과 `crop`을 포함한 수정 가능한 중첩 데이터까지 독립적으로 복제하도록 보강했다.
+* `useCubeProject.ts`를 React 상태와 이벤트 흐름 조정 중심으로 축소했다.
+* `src/cube/projectState.test.ts`를 추가해 프로젝트 상태 유틸리티의 단위 테스트를 구성했다.
 
 ### Verification
 
@@ -18,6 +23,8 @@
 * `npm run test` 통과
 * cubejs 통합 테스트 2개 통과
 * 브라우저에서 기존 4단계 화면과 사용자 동작을 수동 확인했다.
+* projectState 단위 테스트 6개 통과
+* 기존 cubejs 통합 테스트를 포함한 전체 테스트 통과
 
 ### Compatibility
 
